@@ -43,10 +43,10 @@ def InjectMethod(pyClass:object):
 
 def MixInFunction(pyFunction:types.FunctionType,mixinFunction:types.FunctionType):
    '''
-   a ugly function , but ...
+   a ugly function , but ...\n
+   use it with static function,otherwise it may cause a error
    '''
    pyFunction.__code__=mixinFunction.__code__
-
 class OriMethod:
    def __init__(self,pyClass:object) -> None:
       '''

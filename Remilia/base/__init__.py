@@ -1,5 +1,4 @@
-from remilia.base.Plugin import Plugin
-from . import API,Plugin
+from . import API
 
 __all__=[
     API,
