@@ -77,7 +77,11 @@ class __LiteLog(ABC):
         '''
         key:stdout,write
         '''
-    
+    @abstractmethod
+    def debughere(self,keylist):
+        '''
+        a decorator for easy debug
+        '''
     @abstractmethod
     def writeAllLog(self,logpath:str) -> None:
         '''
@@ -152,6 +156,7 @@ class LiteLog(__LiteLog):
             }
         self.__color={
             "INFO":Fore.GREEN,
+            "STDOUT":Fore.GREEN,
             "WARN":Fore.YELLOW,
             "ERROR":Fore.RED,
             "DEBUG":Fore.CYAN,
@@ -181,8 +186,26 @@ class LiteLog(__LiteLog):
 
     def __stdoutHandle(func):
         def stdout_warpper(self,*values: object,**kwargs):
-            self.Oriprint("hello",*values,**kwargs)
-            
+            fore_stdout=(
+                self.__color[func.__name__.upper()]
+                +self.__format["log"]
+                .replace("$infolevel$",func.__name__.upper())
+                .replace("$time$",self.getTime)
+                .replace("$name$",self.__name)
+                .replace("$msg$",self.__color["TEXT"])
+                )
+            plain_stdout=(
+                self.__format["log"]
+                .replace("$infolevel$",func.__name__.upper())
+                .replace("$time$",self.getTime)
+                .replace("$name$",self.__name)
+                .replace("$msg$","")
+                )
+            self.Oriprint(fore_stdout,*values,**kwargs)
+            values=map(str,values)
+            self.plainlog.append(plain_stdout+"".join(values))
+            self.forelog.append(fore_stdout+"".join(values))
+            self.__writeStream()
         def common_warpper(self,msg):
             fore_stdout=(
                 self.__color[func.__name__.upper()]
@@ -256,14 +279,8 @@ class LiteLog(__LiteLog):
         super().debug(msg)
     
     @__stdoutHandle
-    def stdout(
-    *values: object,
-    sep=' ',
-    end='\n',
-    file=sys.stdout,
-    flush=False
-    ):
-        pass
+    def stdout(*values: object,sep=' ',end='\n',file=sys.stdout,flush=False):
+        super().stdout(*values,sep=' ',end='\n',file=sys.stdout,flush=False)
     
     def openDebug(self,key):
         super().openDebug(key)
@@ -272,7 +289,17 @@ class LiteLog(__LiteLog):
     def closeDebug(self,key):
         super().closeDebug(key)
         self.__debug[key]=False
-        
+    
+    def debughere(self,keylist):
+        def outter(func):
+            def warpper(*args,**kwargs):
+                for key in keylist:
+                    self.openDebug(key)
+                func(*args,**kwargs)
+                for key in keylist:
+                    self.closeDebug(key)
+            return warpper
+        return outter
     @property
     def plainlog(self):
         return self.__log["plainlog"]
@@ -350,4 +377,3 @@ class LiteLog(__LiteLog):
     def apply_logformat(self,key,color,log):
         super().apply_logformat(key,color,log)
         self.__customformat.append({"key":key,"color":color,"log":log})
-    

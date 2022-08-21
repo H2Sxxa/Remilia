@@ -1,6 +1,6 @@
 import types
 
-def MixInClass(pyClass:object, mixInClass:object, makeAncestor:bool=False) -> None:
+def MixInClass(pyClass:object, mixInClass:object, makeAncestor:bool=False,ignoreMagicMethod=False) -> None:
    '''
    @param {object} pyClass the target class\n
    @param {object} mixInClass your class\n
@@ -19,10 +19,30 @@ def MixInClass(pyClass:object, mixInClass:object, makeAncestor:bool=False) -> No
         MixInClass(pyClass, baseClass)
      for name in dir(mixInClass):
          if not name.startswith('__'):
-           member = getattr(mixInClass, name)
-           if type(member) is types.MethodType:
+            member = getattr(mixInClass, name)
+            if type(member) is types.MethodType:
                member = member.__func__
-           setattr(pyClass, name, member)
+            setattr(pyClass, name, member)
+         elif ignoreMagicMethod:
+            member = getattr(mixInClass, name)
+            if type(member) is types.MethodType:
+               member = member.__func__
+            try:
+               setattr(pyClass, name, member)
+            except:
+               pass
+
+def InjectMethod(pyClass:object):
+   '''
+   A decorator for easy inject function
+   '''
+   def warpper(func:types.FunctionType):
+      setattr(pyClass,func.__name__,types.MethodType(func,pyClass))
+      return func
+   return warpper
+
+def MixInFunction(pyFunction:types.FunctionType,mixinFunction:types.FunctionType):
+   pyFunction.__code__=mixinFunction.__code__
 
 class OriMethod:
    def __init__(self,pyClass:object) -> None:
