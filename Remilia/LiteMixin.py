@@ -42,11 +42,15 @@ def InjectMethod(pyClass:object):
    return warpper
 
 def MixInFunction(pyFunction:types.FunctionType,mixinFunction:types.FunctionType):
+   '''
+   a ugly function , but ...
+   '''
    pyFunction.__code__=mixinFunction.__code__
 
 class OriMethod:
    def __init__(self,pyClass:object) -> None:
       '''
+      a class used to save the raw class\n
       cls=OriMethod(class)\n
       cls.class_method()
       '''

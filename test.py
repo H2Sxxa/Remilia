@@ -1,4 +1,4 @@
-import Remilia
+import remilia
 
-Logger=Remilia.LiteLog.LiteLog(__name__)
+Logger=remilia.LiteLog.LiteLog(__name__)
 Logger.info("hello")
