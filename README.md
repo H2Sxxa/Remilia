@@ -1,7 +1,7 @@
 # Install
 
 ```shell
-pip install remilia
+pip install Remilia
 ```
 
 # Quick start
