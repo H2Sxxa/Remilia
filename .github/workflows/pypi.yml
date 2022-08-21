@@ -36,6 +36,10 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install setuptools wheel twine
+  
+    - name: Get current date
+      id: date
+      run: echo "::set-output name=today::$(date +'%Y-%m-%d-%H-%I-%S')"
 
     - name: Create Release
       id: create_release
@@ -44,14 +48,10 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ steps.date.outputs.today }} 
-        release_name: AutoRelease ${{ steps.date.outputs.today }}
+        release_name: Date ${{ steps.date.outputs.today }}
         draft: false
         prerelease: false
 
-    - name: Get current date
-      id: date
-      run: echo "::set-output name=today::$(date +'%Y-%m-%d-%H-%I-%S')"
-      
     # pypi
     - name: Build and publish
       env:
