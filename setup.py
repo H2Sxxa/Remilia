@@ -4,7 +4,7 @@
 from time import localtime, strftime
 from setuptools import setup, find_packages
 setup(
-    name='remilia',
+    name='Remilia',
     version=strftime("%Y.%m.%d.%H.%M.%S", localtime()),
     description=(
         'Use python with dignity,here offer some utils'
