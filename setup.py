@@ -9,7 +9,8 @@ setup(
     description=(
         'Use python with dignity,here offer some utils'
     ),
-    long_description=open('README.rst').read(),
+    long_description_content_type='text/markdown',
+    long_description=open('README.md').read(),
     author='h2sxxa',
     author_email='H2Sxxa0w0@gmail.com',
     maintainer='h2sxxa',
