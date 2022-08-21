@@ -1,1 +1,5 @@
-wait to be fullided
+Quick start
+
+```python
+import Remilia
+```
