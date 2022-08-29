@@ -46,3 +46,19 @@ hello()
 >>>hello
 >>>after the hello
 ```
+
+## LiteThread
+
+```python
+from Remilia import LiteThread
+
+def hello():
+    return "hello"
+
+TVM=LiteThread.ThreadValueManager()
+TestThread=LiteThread.LiteThread(target=hello)
+TestThread.start()
+print(TVM.waitResult(TestThread))
+
+>>>hello
+```

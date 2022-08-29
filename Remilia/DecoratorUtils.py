@@ -7,7 +7,7 @@ def Deprecated(func):
     '''
     def inner(*args,**kwargs):
         caller = getframeinfo(stack()[1][0])
-        print("WARNING:Somewhere are useing a deprecated api file:%s line:%s"%(caller.filename,caller.lineno))
+        print("WARNING:Somewhere are useing a deprecated api File \"%s\", line %s, in %s"%(caller.filename,caller.lineno,caller.function))
         result=func(*args,**kwargs)
         return result
     return inner
