@@ -1,10 +1,4 @@
-
-class LitePGL:
-    def __init__(self) -> None:
-        pass
-
-
-class Plugin():
+class PluginType():
     def __init__(self) -> None:pass
 
 class PluginGroup():
@@ -18,4 +12,7 @@ class PluginLoadPoint():
 class PluginLoader():
     def __init__(self,PluginGroup:PluginGroup) -> None:
         self.PluginGroup=PluginGroup
-    def registPlugin(self,name,Point) -> None:pass
+    def registPlugin(self,Plugin:PluginType) -> None:
+        def warpper(func):
+            pass
+        return warpper

@@ -1,4 +1,4 @@
-![PID 100402267](https://pixiv.re/100402267-3.jpg)
+![https://raw.githubusercontent.com/IAXRetailer/Remilia/main/background.png](https://raw.githubusercontent.com/IAXRetailer/Remilia/main/background.png "PID 100402267")
 
 # Install
 

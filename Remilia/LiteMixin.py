@@ -2,9 +2,9 @@ import types
 
 def MixInClass(pyClass:object, mixInClass:object, makeAncestor:bool=False,ignoreMagicMethod=False) -> None:
    '''
-   @param {object} pyClass the target class\n
-   @param {object} mixInClass your class\n
-   @param {bool} makeAncestor modify the Ancestor of pyClass
+   :param pyClass: the target class\n
+   :param mixInClass: your class\n
+   :param makeAncestor: modify the Ancestor of pyClass
    '''
    if makeAncestor:
      if mixInClass not in pyClass.__bases__:
