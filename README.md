@@ -55,10 +55,10 @@ from Remilia import LiteThread
 def hello():
     return "hello"
 
-TVM=LiteThread.ThreadValueManager()
+TVManager=LiteThread.ThreadValueManager()
 TestThread=LiteThread.LiteThread(target=hello)
 TestThread.start()
-print(TVM.waitResult(TestThread))
+print(TVManager.waitResult(TestThread))
 
 >>>hello
 ```
