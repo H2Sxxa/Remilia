@@ -294,12 +294,17 @@ class LiteLog(__LiteLog):
         def outter(func):
             def warpper(*args,**kwargs):
                 for key in keylist:
-                    self.openDebug(key)
-                func(*args,**kwargs)
-                for key in keylist:
-                    self.closeDebug(key)
+                    if self.__debug[key]:
+                        pass
+                    else:
+                        for key in keylist:
+                            self.openDebug(key)
+                        func(*args,**kwargs)
+                        for key in keylist:
+                            self.closeDebug(key)
             return warpper
         return outter
+    
     @property
     def plainlog(self):
         return self.__log["plainlog"]

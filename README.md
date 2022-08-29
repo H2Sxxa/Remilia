@@ -23,21 +23,22 @@ Logger.info("hello")
 ## LiteEvent
 
 ```python
-import Remilia
+from Remilia.LiteEvent import EventType,EventBus
+EventBus=EventBus()
 
-EventBus=Remilia.LiteEvent.Event()
-
-@EventBus.registEvent("hello")
+@EventBus.registEvent(EventType("hello"))
 def hello():
     print("hello")
 
 @EventBus.registEventTrigger("hello",EventBus.PreEvent)
-def beforehello(event):
-    print(f"before the {event.__code__.co_name}")
+def beforehello(event:EventType):
+    print(f"before the {event.getOBJ().__code__.co_name} event")
+    #event.setCancel()
+    #print("I cancel the event")
     
 @EventBus.registEventTrigger("hello",EventBus.AftEvent)
-def beforehello(event):
-    print(f"after the {event.__code__.co_name}")
+def beforehello(event:EventType):
+    print(f"after the {event.getOBJ().__code__.co_name} event")
 
 hello()
 
