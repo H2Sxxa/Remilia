@@ -11,9 +11,9 @@ pip install Remilia
 ## LiteLog
 
 ```python
-import Remilia
+from Remilia.LiteLog import LiteLog
 
-Logger=Remilia.LiteLog.LiteLog(__name__)
+Logger=LiteLog(__name__)
 
 Logger.info("hello")
 
@@ -61,4 +61,10 @@ TestThread.start()
 print(TVManager.waitResult(TestThread))
 
 >>>hello
+```
+
+## LiteMixin
+
+```python
+W.I.P
 ```

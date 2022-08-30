@@ -12,7 +12,9 @@ class PluginLoadPoint():
 class PluginLoader():
     def __init__(self,PluginGroup:PluginGroup) -> None:
         self.PluginGroup=PluginGroup
+        
     def registPlugin(self,Plugin:PluginType) -> None:
         def warpper(func):
             pass
         return warpper
+    

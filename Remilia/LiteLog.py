@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 import sys
-from colorama import Fore,Style,init
+from colorama import Fore,init
 from time import strftime,localtime
 import platform
-
+if platform.system() == "Windows":
+    init(autoreset=True,wrap=True)
 class __LiteLog(ABC):
     @abstractmethod
     def __init__(self) -> None:
@@ -80,7 +81,7 @@ class __LiteLog(ABC):
     @abstractmethod
     def debughere(self,keylist):
         '''
-        a decorator for easy debug
+        a decorator for easy debug,you can use Logger.DEBUGSTDOUT and others as a keylist here
         '''
     @abstractmethod
     def writeAllLog(self,logpath:str) -> None:
@@ -127,7 +128,7 @@ class __LiteLog(ABC):
             "WARN":Fore.YELLOW,\n
             "ERROR":Fore.RED,\n
             "DEBUG":Fore.CYAN,\n
-            "TEXT":Style.RESET_ALL\n
+            "TEXT":Fore.RESET\n
         },
         "log":"[ $infolevel$ | $name$ | $time$ ] $msg$",
         '''
@@ -137,9 +138,9 @@ class LiteLog(__LiteLog):
     def __init__(self,name=__name__) -> None:
         super().__init__()
         self.Oriprint = print
-        if platform.system() == "Windows":
-            init(True)
-            
+        self.DEBUGSTDOUT=["stdout"]
+        self.DEBUGWRITE=["write"]
+        self.DEBUGSTDOUTWRITE=["stdout","write"]
         self.__log={
             "plainlog":[],
             "forelog":[]
@@ -160,7 +161,7 @@ class LiteLog(__LiteLog):
             "WARN":Fore.YELLOW,
             "ERROR":Fore.RED,
             "DEBUG":Fore.CYAN,
-            "TEXT":Style.RESET_ALL
+            "TEXT":Fore.RESET
         }
 
         self.__customfunc=[]
@@ -291,6 +292,7 @@ class LiteLog(__LiteLog):
         self.__debug[key]=False
     
     def debughere(self,keylist):
+        super().debughere(keylist)
         def outter(func):
             def warpper(*args,**kwargs):
                 for key in keylist:

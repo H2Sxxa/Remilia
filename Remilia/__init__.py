@@ -1,4 +1,4 @@
-from . import LiteLog,LiteMixin,LiteUtils,LitePGL,LiteTasks,LiteEvent,LiteConfig,LiteI18n,LiteThread,DecoratorUtils,base
+from . import LiteLog,LiteMixin,LiteUtils,LitePGL,LiteTasks,LiteEvent,LiteConfig,LiteResource,LiteI18n,LiteThread,DecoratorUtils,base
 
 __all__=[
     LiteLog,
@@ -6,6 +6,7 @@ __all__=[
     LiteUtils,
     LiteThread,
     LitePGL,
+    LiteResource,
     LiteTasks,
     LiteEvent,
     LiteConfig,

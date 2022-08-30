@@ -38,17 +38,15 @@ class ThreadHook():
         self.exc_type=HookerInfo.exc_type
         self.exc_value=HookerInfo.exc_value
         self.exc_traceback=HookerInfo.exc_traceback
-        self.thread=HookerInfo.thread
+        self.thread:threading.Thread=HookerInfo.thread
+        self.threadName=self.thread.getName()
         if self.exc_type == ThreadValueBody:
-            self.ThreadManager.ThreadValue.update({self.exc_value.args[0]:self.exc_value.args[1]})
+            self.ThreadManager.ThreadValue.update({self.threadName:self.exc_value.args[0]})
         else:
             try:
-                if isinstance(self.exc_value.args[0],str):
-                    print("Exception in thread %s:" % self.exc_value.args[0])
-                else:
-                    print("Exception in a thread")
+                print("Exception in thread %s:" % self.threadName)
             except:
-                print("Exception in a thread:")
+                pass
             traceback.print_exception(self.exc_type,self.exc_value,self.exc_traceback)
 
 class LiteThread(threading.Thread):
@@ -65,7 +63,7 @@ class LiteThread(threading.Thread):
             if self._target:
                 try:
                     returnValue=self._target(*self._args, **self._kwargs)
-                    raise ThreadValueBody(self.getName(),returnValue)
+                    raise ThreadValueBody(returnValue)
                 except BaseException as e:
                     raise e
         finally:
