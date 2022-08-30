@@ -1,4 +1,4 @@
-import os
+import os,chardet
 class Path:
     def __init__(self,path) -> None:
         self.path=path
@@ -15,6 +15,7 @@ class Path:
             self.ISDIRECTORY=False
         self.parentdir=os.path.dirname(self.path)
         self.abspath=os.path.abspath(self.path)
+        self.readcodingtype="utf-8"
     def getParentDir(self):
         return Path(os.path.dirname(self.path))
     
@@ -25,6 +26,11 @@ class Path:
     @staticmethod
     def isexist(path:str):
         return os.path.exists(path)
+    
+    @property
+    def text(self):
+        with open(self.abspath,"r",encoding=self.readcodingtype) as f:
+            return f.read()
     
 class FileAttr:
     def __init__(self,pathType:Path) -> None:
@@ -51,3 +57,5 @@ class FileAttr:
             tempPath=handle[0]
         result.reverse()
         return result
+    
+    
