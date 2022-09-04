@@ -66,5 +66,37 @@ print(TVManager.waitResult(TestThread))
 ## LiteMixin
 
 ```python
-W.I.P
+
+```
+
+## LitePGL
+
+```python
+#main.py
+#test
+# - plugin.py
+
+#main
+
+from Remilia import LitePGL,LiteResource
+PGLoader=LitePGL.PluginLoader()
+LoadPoint1=LitePGL.PluginLoadPoint(PGLoader,"loadpoint1")
+PGLoader.initLoadPlugin(LiteResource.Path("test/plugin.py"))
+LoadPoint1.run()
+
+#test\plugin.py
+
+PluginLoader=self
+@PluginLoader.registPlugin("loadpoint1")
+class plugin(PluginType):
+    def __init__(self) -> None:
+        print(PluginLoader)
+    
+    def __reference__(self):
+        return {
+            ...
+        }
+
+>>><class 'Remilia.LitePGL.PluginLoader'>
+
 ```

@@ -4,8 +4,8 @@ class EventType:
         self.name=name
         self.obj=None
         
-    def setCancel(self):
-        self.cancel=True
+    def setCancel(self,isCancel:bool):
+        self.cancel=isCancel
     
     def getName(self):
         return self.name
@@ -39,9 +39,9 @@ class EventBus:
                     result=None
                 else:
                     result=func(*args,**kwargs)
-                self.EventAfterCheck(event_name,event)
+                    self.EventAfterCheck(event_name,event)
                 if event.cancel:
-                    event.cancel=False
+                    event.setCancel(False)
                 return result
             return warpper
         return outter
@@ -69,10 +69,10 @@ class EventBus:
                     print(KeyError.__name__+":",e,"is not in event list")
         return outter
     
-    def EventPreCheck(self,name,eventType):
+    def EventPreCheck(self,name,eventType:EventType):
         for event in self.PreEvent[name]:
             event(eventType)
-            
+                
     def EventAfterCheck(self,name,eventType):
         for event in self.AftEvent[name]:
             event(eventType)

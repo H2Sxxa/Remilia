@@ -1,8 +1,8 @@
-import os,chardet
+import os,pathlib
 class Path:
-    def __init__(self,path) -> None:
+    def __init__(self,path,isAbstractPath=False) -> None:
         self.path=path
-        if not os.path.exists(self.path):
+        if not os.path.exists(self.path) and not isAbstractPath:
             raise OSError("No such file '%s'" % self.path)
         if os.path.isdir(self.path):
             self.ISDIRECTORY=True
@@ -16,12 +16,28 @@ class Path:
         self.parentdir=os.path.dirname(self.path)
         self.abspath=os.path.abspath(self.path)
         self.readcodingtype="utf-8"
+        
     def getParentDir(self):
-        return Path(os.path.dirname(self.path))
+        return Path(os.path.dirname(self.abspath))
+    
+    def glob(self,pattern):
+        """Iterate over this subtree and yield all existing files (of any
+        kind, including directories) matching the given relative pattern.
+        """
+        return pathlib.Path(self.abspath).glob(pattern)
+    
+    def rglob(self,pattern):
+        """Recursively yield all existing files (of any kind, including
+        directories) matching the given relative pattern, anywhere in
+        this subtree.
+        """
+        return pathlib.Path(self.abspath).rglob(pattern)
+    
     
     @property
     def FileAttr(self):
         return FileAttr(self)
+    
     
     @staticmethod
     def isexist(path:str):
@@ -29,8 +45,16 @@ class Path:
     
     @property
     def text(self):
-        with open(self.abspath,"r",encoding=self.readcodingtype) as f:
-            return f.read()
+        if self.ISFILE:
+            with open(self.abspath,"r",encoding=self.readcodingtype) as f:
+                return f.read()
+        else:
+            return None
+    def __enter__(self):
+        return self
+    
+    def __exit__(self,*args,**kwargs):
+        pass
     
 class FileAttr:
     def __init__(self,pathType:Path) -> None:
