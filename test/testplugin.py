@@ -1,12 +1,12 @@
-from Remilia.LitePGL import PluginLoadPoint, PluginType
-
-
 PluginLoader=self
-@self.registPlugin(self.getInterface["LoadPoint1"])
-class plugin(PluginType):
+p2Self=PluginLoader.requestPlugin("p2")
+
+@PluginLoader.registPlugin(PluginLoader.getInterface["LoadPoint1"])
+class plugin:
     def __init__(self) -> None:
-        global PluginLoader
-        PluginLoader.requestPlugin("p2").hello("你好")
+        global PluginLoader,p2Self
+        print("I am p1")
+        p2Self.hello("hello")
     def __reference__(self):
         return {
             "pluginid":"p1"

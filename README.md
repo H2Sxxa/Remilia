@@ -66,37 +66,86 @@ print(TVManager.waitResult(TestThread))
 ## LiteMixin
 
 ```python
+from Remilia import LiteMixin
+class A:
+    def __init__(self) -> None:
+        self.hello()
+    def hello(self):
+        print("hello")
+A()
+class A_patch:
+    def hello(self):
+        print("byebye")
 
+LiteMixin.MixInClass(A,A_patch)
+A()
+
+
+>>>hello
+>>>byebye
 ```
 
 ## LitePGL
 
 ```python
-#main.py
-#test
-# - plugin.py
+
+# main.py
+# test
+#  - plugin1.py
+#  - plugin2.py
+
+
 
 #main
 
 from Remilia import LitePGL,LiteResource
 PGLoader=LitePGL.PluginLoader()
 LoadPoint1=LitePGL.PluginLoadPoint(PGLoader,"loadpoint1")
-PGLoader.initLoadPlugin(LiteResource.Path("test/plugin.py"))
+PGLoader.setInterface(globals())
+PGLoader.initLoadPlugin(LiteResource.Path("test/plugin2.py"))
+PGLoader.initLoadPlugin(LiteResource.Path("test/plugin1.py"))
 LoadPoint1.run()
 
-#test\plugin.py
-
+#test/plugin1.py
 PluginLoader=self
-@PluginLoader.registPlugin("loadpoint1")
-class plugin(PluginType):
+p2Self=PluginLoader.requestPlugin("p2")
+
+@PluginLoader.registPlugin(PluginLoader.getInterface["LoadPoint1"])
+class plugin:
     def __init__(self) -> None:
-        print(PluginLoader)
-    
+        global PluginLoader,p2Self
+        print("I am p1")
+        p2Self.hello("hello")
     def __reference__(self):
         return {
-            ...
+            "pluginid":"p1"
         }
 
->>><class 'Remilia.LitePGL.PluginLoader'>
+#test/plugin2.py
+PluginLoader=self
+@PluginLoader.registPlugin(PluginLoader.getInterface["LoadPoint1"])
+class plugin2:
+    def __init__(self) -> None:
+        print("I am p2")
+    
+    def hello(self,*args):
+        print(*args)
+
+    def __reference__(self):
+        return {
+            "pluginid":"p2"
+        }
+
+>>>I am p2
+>>>I am p1
+>>>hello
+
+
 
 ```
+
+# There are also some other superising class/method here
+
+# Learn more in our WIKI
+
+## https://github.com/IAXRetailer/Remilia/wiki

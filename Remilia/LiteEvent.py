@@ -3,12 +3,18 @@ class EventType:
         self.cancel=False
         self.name=name
         self.obj=None
-        
+        self.result=None
     def setCancel(self,isCancel:bool):
         self.cancel=isCancel
     
     def getName(self):
         return self.name
+    
+    def setResult(self,result):
+        self.result=result
+        
+    def getResult(self):
+        return self.result
     
     def setOBJ(self,obj):
         self.obj=obj
@@ -42,6 +48,7 @@ class EventBus:
                     self.EventAfterCheck(event_name,event)
                 if event.cancel:
                     event.setCancel(False)
+                event.setResult(result)
                 return result
             return warpper
         return outter
