@@ -13,3 +13,5 @@ __all__=[
     DecoratorUtils,
     base,
     ]
+
+#__VERSION__#

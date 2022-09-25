@@ -4,11 +4,23 @@
 from time import localtime, strftime
 from setuptools import setup, find_packages,Require
 
-Require(name="colorama")
+__version__=strftime("%Y.%m.%d.%H.%M.%S", localtime())
+
+with open("Remilia/__init__.py","r",encoding="utf-8") as pkg:
+    text=pkg.read().replace("#__VERSION__#","version=\"%s\""%__version__)
+with open("Remilia/__init__.py","w",encoding="utf-8") as pkg:
+    pkg.write(text)
+    
+import colorama
+Require(
+    name="colorama",
+    requested_version=colorama.__version__,
+    module=colorama,
+    )
 
 setup(
     name='Remilia',
-    version=strftime("%Y.%m.%d.%H.%M.%S", localtime()),
+    version=__version__,
     description=(
         'Use python with dignity,here offer some utils'
     ),
