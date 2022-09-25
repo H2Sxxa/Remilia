@@ -2,7 +2,10 @@
 # coding=utf-8
 
 from time import localtime, strftime
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages,Require
+
+Require(name="colorama")
+
 setup(
     name='Remilia',
     version=strftime("%Y.%m.%d.%H.%M.%S", localtime()),

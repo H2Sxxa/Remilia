@@ -4,7 +4,7 @@ class EventType:
         self.name=name
         self.obj=None
         self.result=None
-    def setCancel(self,isCancel:bool):
+    def setCancel(self,isCancel:bool=True):
         self.cancel=isCancel
     
     def getName(self):

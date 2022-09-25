@@ -24,15 +24,14 @@ class Path:
         """Iterate over this subtree and yield all existing files (of any
         kind, including directories) matching the given relative pattern.
         """
-        return pathlib.Path(self.abspath).glob(pattern)
+        return list(pathlib.Path(self.abspath).glob(pattern))
     
     def rglob(self,pattern):
         """Recursively yield all existing files (of any kind, including
         directories) matching the given relative pattern, anywhere in
         this subtree.
         """
-        return pathlib.Path(self.abspath).rglob(pattern)
-    
+        return list(pathlib.Path(self.abspath).rglob(pattern))
     
     @property
     def FileAttr(self):
@@ -62,9 +61,15 @@ class FileAttr:
         self.createtime=os.path.getctime(self.pathType.abspath)
         self.modifytime=os.path.getmtime(self.pathType.abspath)
         self.accesstime=os.path.getatime(self.pathType.abspath)
-        self.filesize=os.path.getsize(self.pathType.abspath)
         self.exttuple=os.path.splitext(self.pathType.abspath)
         self.ext=os.path.splitext(self.pathType.abspath)[-1]
+    
+    @property
+    def filesize(self):
+        if self.pathType.ISFILE:
+            return os.path.getsize(self.pathType.abspath)
+        elif self.pathType.ISDIRECTORY:
+            return self.pathType.rglob("*")
     
     @property
     def fileAllext(self):
@@ -81,5 +86,3 @@ class FileAttr:
             tempPath=handle[0]
         result.reverse()
         return result
-    
-    
