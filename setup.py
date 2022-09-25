@@ -10,8 +10,6 @@ with open("Remilia/__init__.py","r",encoding="utf-8") as pkg:
     text=pkg.read().replace("#__VERSION__#","__version__=\"%s\""%__version__)
 with open("Remilia/__init__.py","w",encoding="utf-8") as pkg:
     pkg.write(text)
-    
-
 setup(
     name='Remilia',
     version=__version__,
@@ -38,6 +36,6 @@ setup(
     'Programming Language :: Python :: 3.10',
     ],
     install_requires = [
-        "colorama"
+        "colorama",
         ]
 )
