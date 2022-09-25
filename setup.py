@@ -2,21 +2,15 @@
 # coding=utf-8
 
 from time import localtime, strftime
-from setuptools import setup, find_packages,Require
+from setuptools import setup, find_packages
 
 __version__=strftime("%Y.%m.%d.%H.%M.%S", localtime())
 
 with open("Remilia/__init__.py","r",encoding="utf-8") as pkg:
-    text=pkg.read().replace("#__VERSION__#","version=\"%s\""%__version__)
+    text=pkg.read().replace("#__VERSION__#","__version__=\"%s\""%__version__)
 with open("Remilia/__init__.py","w",encoding="utf-8") as pkg:
     pkg.write(text)
     
-import colorama
-Require(
-    name="colorama",
-    requested_version=colorama.__version__,
-    module=colorama,
-    )
 
 setup(
     name='Remilia',
@@ -43,4 +37,7 @@ setup(
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     ],
+    install_requires = [
+        "colorama"
+        ]
 )
