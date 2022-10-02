@@ -1,9 +1,21 @@
 import os,pathlib
 class Path:
-    def __init__(self,path,isAbstractPath=False) -> None:
+    def __init__(self,path:str,checkexist=False) -> None:
         self.path=path
-        if not os.path.exists(self.path) and not isAbstractPath:
-            raise OSError("No such file '%s'" % self.path)
+        if not os.path.exists(self.path):
+            if checkexist:
+                raise OSError("No such file '%s'" % self.path)
+            else:
+                self.ISFILE=False
+                self.ISDIRECTORY=False
+        else:
+            self._updateStatus()
+            
+        self.parentdir=os.path.dirname(self.path)
+        self.abspath=os.path.abspath(self.path)
+        self.encoding="utf-8"
+        
+    def _updateStatus(self):
         if os.path.isdir(self.path):
             self.ISDIRECTORY=True
             self.ISFILE=False
@@ -13,10 +25,15 @@ class Path:
         else:
             self.ISFILE=False
             self.ISDIRECTORY=False
-        self.parentdir=os.path.dirname(self.path)
-        self.abspath=os.path.abspath(self.path)
-        self.readcodingtype="utf-8"
-        
+            
+    def write(self,mode,x,encoding=None):
+        self._updateStatus()
+        if self.ISFILE:
+            if not encoding:
+                encoding=self.encoding
+            with open(self.abspath,mode,encoding=encoding) as File:
+                File.write(x)
+            
     def getParentDir(self):
         return Path(os.path.dirname(self.abspath))
     
@@ -33,22 +50,40 @@ class Path:
         """
         return list(pathlib.Path(self.abspath).rglob(pattern))
     
+    def setEncoding(self,encoding="utf-8"):
+        self.encoding=encoding
+        return self
+    
     @property
-    def FileAttr(self):
-        return FileAttr(self)
-    
-    
-    @staticmethod
-    def isexist(path:str):
-        return os.path.exists(path)
+    def Attrs(self):
+        self._updateStatus()
+        if self.ISFILE:
+            return FileAttr(self)
+        elif self.ISDIRECTORY:
+            return DirectoryAttr(self)
+        
+    @property
+    def isexist(self):
+        return os.path.exists(self.abspath)
     
     @property
     def text(self):
+        self._updateStatus()
         if self.ISFILE:
-            with open(self.abspath,"r",encoding=self.readcodingtype) as f:
+            with open(self.abspath,"r",encoding=self.encoding) as f:
                 return f.read()
         else:
             return None
+        
+    @property
+    def content(self):
+        self._updateStatus()
+        if self.ISFILE:
+            with open(self.abspath,"rb",encoding=self.encoding) as f:
+                return f.read()
+        else:
+            return None
+        
     def __enter__(self):
         return self
     
@@ -66,10 +101,7 @@ class FileAttr:
     
     @property
     def filesize(self):
-        if self.pathType.ISFILE:
-            return os.path.getsize(self.pathType.abspath)
-        elif self.pathType.ISDIRECTORY:
-            return self.pathType.rglob("*")
+        return os.path.getsize(self.pathType.abspath)
     
     @property
     def fileAllext(self):
@@ -86,3 +118,15 @@ class FileAttr:
             tempPath=handle[0]
         result.reverse()
         return result
+
+class DirectoryAttr:
+    def __init__(self,pathType:Path) -> None:
+        self.pathType=pathType
+        self.createtime=os.path.getctime(self.pathType.abspath)
+        self.modifytime=os.path.getmtime(self.pathType.abspath)
+        self.accesstime=os.path.getatime(self.pathType.abspath)
+        self.exttuple=os.path.splitext(self.pathType.abspath)
+        self.ext=os.path.splitext(self.pathType.abspath)[-1]
+    
+    @property
+    def totalsize(self):pass

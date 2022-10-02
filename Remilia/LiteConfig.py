@@ -1,6 +1,18 @@
+from json import dumps, loads
+from Remilia.base.Files import KVFileBase
 from .LiteResource import Path
 
 
-class Config:
-    def __init__(self,path:Path) -> None:
-        pass
+class JsonConfig(KVFileBase):
+    def read(self,key):
+        return loads(self.path.text)[key]
+    
+    def write(self, key, value,indent=4) -> None:
+        kvdict=loads(self.path.text)
+        kvdict.update({key:value})
+        self.path.write("w",
+                        dumps(
+                            kvdict,
+                            indent=indent
+                            )
+                        )
