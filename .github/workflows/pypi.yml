@@ -46,7 +46,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ steps.date.outputs.today }} 
-        release_name: Date ${{ steps.date.outputs.today }}
+        release_name: Commit ${{ steps.date.outputs.today }}
         draft: false
         prerelease: false
 

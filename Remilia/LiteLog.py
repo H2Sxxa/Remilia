@@ -74,6 +74,12 @@ class __LiteLog(ABC):
         '''
 
     @abstractmethod
+    def setHide(self,x:bool) -> None:
+        '''
+        if setHide it wont print anything
+        '''
+    
+    @abstractmethod
     def closeDebug(self,key:str) -> None:
         '''
         key:stdout,write
@@ -163,12 +169,15 @@ class LiteLog(__LiteLog):
             "DEBUG":Fore.CYAN,
             "TEXT":Fore.RESET
         }
-
+        self.Hide=False
         self.__customfunc=[]
         
         self.__customformat=[]
         
-        
+    def setHide(self,x:bool):
+        self.Hide=x
+    
+    
     def setColor(self,loglevel,color):
         super().setColor()
         loglevel=loglevel.upper()
@@ -202,7 +211,8 @@ class LiteLog(__LiteLog):
                 .replace("$name$",self.__name)
                 .replace("$msg$","")
                 )
-            self.Oriprint(fore_stdout,*values,**kwargs)
+            if not self.Hide:
+                self.Oriprint(fore_stdout,*values,**kwargs)
             values=map(str,values)
             self.plainlog.append(plain_stdout+"".join(values))
             self.forelog.append(fore_stdout+"".join(values))
@@ -224,13 +234,13 @@ class LiteLog(__LiteLog):
                 .replace("$msg$","%s" % msg)
                 )
             
-            if func.__name__.upper() != "DEBUG":
+            if func.__name__.upper() != "DEBUG" and not self.Hide:
                 self.Oriprint(fore_stdout)
                 self.plainlog.append(plain_stdout)
                 self.forelog.append(fore_stdout)
                 self.__writeStream()
                 
-            elif self.__debug["stdout"] == True:
+            elif self.__debug["stdout"] == True and not self.Hide:
                 self.Oriprint(fore_stdout)
                 
             if self.__debug["write"] == True:

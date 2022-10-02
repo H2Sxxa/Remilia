@@ -144,8 +144,6 @@ class plugin2:
 
 ```
 
-# There are also some other superising class/method here
-
 # Learn more in our WIKI
 
 ## https://github.com/IAXRetailer/Remilia/wiki
