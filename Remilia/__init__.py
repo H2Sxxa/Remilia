@@ -1,8 +1,20 @@
-from . import LiteLog,LiteMixin,LiteUtils,LitePGL,LiteTasks,LiteEvent,LiteConfig,LiteResource,LiteI18n,LiteThread,DecoratorUtils,base
+from . import (
+    LiteLog,
+    LiteMixin,
+    LitePGL,
+    LiteTasks,
+    LiteEvent,
+    LiteConfig,
+    LiteResource,
+    LiteI18n,
+    LiteThread,
+    base,
+    utils,
+    )
+
 __all__=[
     LiteLog,
     LiteMixin,
-    LiteUtils,
     LiteThread,
     LitePGL,
     LiteResource,
@@ -10,8 +22,8 @@ __all__=[
     LiteEvent,
     LiteConfig,
     LiteI18n,
-    DecoratorUtils,
     base,
+    utils,
     ]
 
 #__VERSION__#
