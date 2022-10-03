@@ -1,13 +1,6 @@
-try:
-    from . import (
+from . import (
     LiteLog,
     LiteTasks,
-    utils,
-    )
-except:
-    pass
-
-from . import (
     LiteMixin,
     LitePGL,
     LiteEvent,
@@ -16,6 +9,7 @@ from . import (
     LiteI18n,
     LiteThread,
     base,
+    utils
     )
 
 __all__=[
@@ -37,12 +31,6 @@ __all__=[
 def __REQUIREMENTS__():
     '''
 ## if you want to use some class in our lib,you must install the lib below
-### LiteTasks/LiteLog:
-- #### colorama >= 0.4.5
-
-### LiteConfig.YamlConfig
-- #### pyyaml == 6.0
-
 ### utils/cli
 - #### click >= 8.0
 - #### prompt_toolkit >= 3.0.31

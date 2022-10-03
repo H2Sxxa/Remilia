@@ -4,7 +4,7 @@ from ..LiteResource import Path
 
 class CommonFileBase(ABC):
     @abstractmethod
-    def read(
+    def _read(
         self,
         *args,
         **kwargs,
@@ -41,8 +41,10 @@ class KVFileBase(CommonFileBase):
         return self._read()
     
     @abstractmethod
-    def _read(self) -> any:
-        return any
+    def _read(self) -> dict:
+        return {
+            str:...,str:...
+        }
     
     def read(
         self,
