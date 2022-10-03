@@ -7,6 +7,7 @@ try:
 except:
     pass
 
+from cmath import inf
 from . import (
     LiteMixin,
     LitePGL,
@@ -47,5 +48,6 @@ def __REQUIREMENTS__():
 ### utils/net/pixiv
 - #### pixivpy_async >= 1.2.14
     '''
-    import inspect
-    print(inspect.getsource(__REQUIREMENTS__))
+    info="".join(__import__("inspect").getsourcelines(__REQUIREMENTS__)[0][2:-4])
+    print(info)
+    return info
