@@ -54,6 +54,18 @@ class Path:
         self.encoding=encoding
         return self
     
+    def buildDirectory(self):
+        if not self.isexist:
+            os.makedirs(self.abspath)
+            self._updateStatus()
+        return self
+    
+    def buildFile(self,contant=""):
+        if not self.isexist:
+            self.write("w",contant,self.encoding)
+            self._updateStatus()
+        return self
+    
     @property
     def Attrs(self):
         self._updateStatus()
@@ -130,3 +142,5 @@ class DirectoryAttr:
     
     @property
     def totalsize(self):pass
+
+class PathError(Exception):pass

@@ -1,4 +1,16 @@
-def I18n(Base,*args,**kwargs):
-    class I18n(Base):
-        pass
-    return I18n(*args,**kwargs)
+from typing import Generic, List, TypeVar
+from .base.Files import MultKVFiles
+
+class TranslateManager(dict):
+    def _switch(self,locations:List[dict],comparedict:dict):
+        for location in locations:
+            for var in comparedict.keys():
+                if var in self.keys() and location.__contains__(var):
+                    if id(location[var]) == id(self[var]):
+                        location[var]=comparedict[var]
+    
+    def translateAble(self,x:any,varname:str):
+        self.update({varname:x})
+
+class I18n(MultKVFiles):
+    pass
