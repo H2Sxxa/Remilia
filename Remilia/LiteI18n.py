@@ -7,7 +7,7 @@ class TranslateManager(dict):
             for var in comparedict.keys():
                 if var in self.keys() and location.__contains__(var):
                     if id(location[var]) == id(self[var]):
-                        location[var]=comparedict[var]
+                        location.update({var:comparedict[var]})
     
     def translateAble(self,x:any,varname:str):
         self.update({varname:x})
