@@ -24,15 +24,16 @@ class KVFileBase(CommonFileBase):
     def __init__(
         self,
         path:Path,
+        noneText:str=""
         ) -> None:
         self.encoding=path.encoding
         if path.isexist:
             if path.text == "":
                 with open(path.abspath,"w",encoding=self.encoding) as File:
-                    File.write(r"{}")
+                    File.write(noneText)
         else:
             with open(path.abspath,"w",encoding=self.encoding) as File:
-                File.write(r"{}")
+                File.write(noneText)
         self.path=path
         
     @abstractmethod

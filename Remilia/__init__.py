@@ -7,7 +7,6 @@ try:
 except:
     pass
 
-from cmath import inf
 from . import (
     LiteMixin,
     LitePGL,
@@ -40,6 +39,9 @@ def __REQUIREMENTS__():
 ## if you want to use some class in our lib,you must install the lib below
 ### LiteTasks/LiteLog:
 - #### colorama >= 0.4.5
+
+### LiteConfig.YamlConfig
+- #### pyyaml == 6.0
 
 ### utils/cli
 - #### click >= 8.0
