@@ -35,13 +35,20 @@ class KVFileBase(CommonFileBase):
             with open(path.abspath,"w",encoding=self.encoding) as File:
                 File.write(noneText)
         self.path=path
-        
+    
+    @property
+    def Dict(self):
+        return self._read()
+    
     @abstractmethod
+    def _read(self) -> any:
+        return any
+    
     def read(
         self,
         key,
         ) -> None:
-        return any
+        return self._read()[key]
 
     @abstractmethod
     def write(

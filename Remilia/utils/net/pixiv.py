@@ -26,7 +26,7 @@ def getHeader(auth:dict):
 
 class AioBypass:
     '''
-    A class comes from https://rainchan.win/2021/08/07/%E5%85%B3%E4%BA%8EPixiv%E5%92%8CSNI%E7%9A%84%E9%82%A3%E4%BA%9B%E4%BA%8B/
+    A class adopted from https://rainchan.win/2021/08/07/%E5%85%B3%E4%BA%8EPixiv%E5%92%8CSNI%E7%9A%84%E9%82%A3%E4%BA%9B%E4%BA%8B/
     '''
     @staticmethod
     def BypassClient(*args,**kwargs):
