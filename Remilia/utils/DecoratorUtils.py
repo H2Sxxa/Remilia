@@ -11,3 +11,17 @@ def Deprecated(func):
         result=func(*args,**kwargs)
         return result
     return inner
+
+def Redirect(tofunc):
+    '''
+    when got exception it can post exception to other function to handle it
+    '''
+    def outter(func):
+        def inner(*args,**kwargs):
+            try:
+                result=func(*args,**kwargs)
+            except Exception as excp:
+                result=tofunc(excp)
+            return result
+        return inner
+    return outter

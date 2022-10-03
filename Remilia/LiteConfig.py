@@ -1,5 +1,5 @@
 from json import dumps, loads
-from Remilia.base.Files import KVFileBase
+from .base.Files import KVFileBase
 from .LiteResource import Path
 
 

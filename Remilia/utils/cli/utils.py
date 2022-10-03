@@ -1,5 +1,4 @@
 from typing import List, Optional
-
 import click
 from prompt_toolkit.styles import Style
 

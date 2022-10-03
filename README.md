@@ -143,7 +143,17 @@ class plugin2:
 
 
 ```
+# QA
 
+## Q: AttributeError: module 'Remilia' has no attribute '...'
+
+use the function below or see it in Remilia.__init__ to install the required lib,
+
+if it doesn't work,please consider a issue
+
+```python
+Remilia.__REQUIREMENTS__()
+```
 # Learn more in our WIKI
 
 ## https://github.com/IAXRetailer/Remilia/wiki
