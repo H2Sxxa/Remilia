@@ -6,7 +6,8 @@ class EventContainer:
         self.EventBus=EventBus
         self.Event=Event
         self.result=None
-        
+        self.args=[]
+        self.kwargs={}
     def setCancel(self,x:bool):
         if self.Event.Cancelable():
             self.EventBus.cache["cancel"][self.Event]=x
@@ -16,6 +17,9 @@ class EventContainer:
     def setResult(self,x):
         self.result=x
     
+    def setArgs(self,args,kwargs):
+        self.args=args
+        self.kwargs=kwargs
     
 class EventBus:
     def __init__(self) -> None:
@@ -31,6 +35,7 @@ class EventBus:
         
     def callEvent(self,Event:EventBase,x,*args,**kwargs):
         conter:EventContainer=Event._build(EventBus=self,Event=Event)
+        conter.setArgs(args,kwargs)
         temp=[t for t,event in self.Triggers.items() if event["event"] is Event and event["point"] is Pre]
         temp.sort(key=lambda x:self.Triggers[x]["level"],reverse=True)
         for t in temp:

@@ -40,6 +40,10 @@ def t2(Conter:EventContainer):
     print("after the %s" % Conter.Event)
 
 run1()
+
+>>>Before the <class 'Remilia.LiteEvent.CommonEvent'>
+>>>Event run now
+>>>after the <class 'Remilia.LiteEvent.CommonEvent'>
 ```
 
 ## LiteThread
