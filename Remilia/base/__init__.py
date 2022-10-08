@@ -1,11 +1,13 @@
 from .Files import KVFileBase
 from . import (
     API,
-    Files
+    Files,
+    Events
     )
 
 __all__=[
     API,
     Files,
-    KVFileBase
+    KVFileBase,
+    Events
          ]

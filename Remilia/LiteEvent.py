@@ -1,85 +1,85 @@
-class EventType:
-    def __init__(self,name) -> None:
-        self.cancel=False
-        self.name=name
-        self.obj=None
+from types import FunctionType
+from .base.Events import CancelError, EventBase, Pre, Post
+
+class EventContainer:
+    def __init__(self,EventBus,Event) -> None:
+        self.EventBus=EventBus
+        self.Event=Event
         self.result=None
-    def setCancel(self,isCancel:bool=True):
-        self.cancel=isCancel
-    
-    def getName(self):
-        return self.name
-    
-    def setResult(self,result):
-        self.result=result
         
-    def getResult(self):
-        return self.result
+    def setCancel(self,x:bool):
+        if self.Event.Cancelable():
+            self.EventBus.cache["cancel"][self.Event]=x
+        else:
+            raise CancelError("Event %s is uncancelable" % self.Event)
     
-    def setOBJ(self,obj):
-        self.obj=obj
-        
-    def getOBJ(self):
-        return self.obj
+    def setResult(self,x):
+        self.result=x
+    
     
 class EventBus:
     def __init__(self) -> None:
-        self.EventList=[]
-        self.PreEvent={}
-        self.AftEvent={}
+        self.Events={}
+        self.Triggers={}
+        self.cache={
+            "cancel":{},
+        }
         
-    def registEvent(self,event:EventType):
-        '''
-        register the function/others as a event
-        '''
-        event_name=event.getName()
-        if event_name not in self.EventList:
-            self.EventList.append(event_name)
-            self.PreEvent.update({event_name:[]})
-            self.AftEvent.update({event_name:[]})
-        def outter(func):
-            event.setOBJ(func)
-            def warpper(*args,**kwargs):
-                self.EventPreCheck(event_name,event)
-                if event.cancel:
-                    result=None
-                else:
-                    result=func(*args,**kwargs)
-                    self.EventAfterCheck(event_name,event)
-                if event.cancel:
-                    event.setCancel(False)
-                event.setResult(result)
-                return result
-            return warpper
+    def _regEvent(self,Event,x:FunctionType):
+        self.Events.update({x:Event})
+        self._addcache(Event)
+        
+    def callEvent(self,Event:EventBase,x,*args,**kwargs):
+        conter:EventContainer=Event._build(EventBus=self,Event=Event)
+        temp=[t for t,event in self.Triggers.items() if event["event"] is Event and event["point"] is Pre]
+        temp.sort(key=lambda x:self.Triggers[x]["level"],reverse=True)
+        for t in temp:
+            t(conter)
+            if self.isCancel(Event):
+                self.resetCache(Event)
+                return
+        result=x(*args,**kwargs)
+        conter.setResult(result)
+        temp=[t for t,event in self.Triggers.items() if event["event"] is Event and event["point"] is Post]
+        temp.sort(key=lambda x:self.Triggers[x]["level"],reverse=True)
+        for t in temp:
+            t(conter)
+        return result
+    
+    def EventHandle(self,Event:EventBase,level:int=10,Point=Pre):
+        def outter(x:FunctionType):
+            self.Triggers.update({x:{
+                "event":Event,
+                "level":level,
+                "point":Point,
+                }})
         return outter
     
-    def registEventTrigger(self,event_name,point:dict,AutoaddEvent=False):
-        '''
-        bind it to your event which has registed\n
-        point:\n
-         - EventBus.PreEvent 
-         - EventBus.AftEvent 
-        '''
-        def outter(func):
-            try:
-                point[event_name].append(func)
-            except KeyError as e:
-                if AutoaddEvent:
-                    if point == self.PreEvent:
-                        self.PreEvent.update({event_name:[func]})
-                        self.AftEvent.update({event_name:[]})
-                    elif point == self.AftEvent:
-                        self.PreEvent.update({event_name:[]})
-                        self.AftEvent.update({event_name:[func]})
-                    self.EventList.append(event_name)
-                else:
-                    print(KeyError.__name__+":",e,"is not in event list")
-        return outter
+    def resetCache(self,Event:EventBase) -> bool:
+        self.cache["cancel"][Event]=False
+        
+    def isCancel(self,Event:EventBase) -> bool:
+        return self.cache["cancel"][Event]
     
-    def EventPreCheck(self,name,eventType:EventType):
-        for event in self.PreEvent[name]:
-            event(eventType)
-                
-    def EventAfterCheck(self,name,eventType):
-        for event in self.AftEvent[name]:
-            event(eventType)
+    def _addcache(self,Event:EventBase):
+        self.cache["cancel"].update({Event:False})
+
+class CommonEvent(EventBase):
+    def call(self,EventBus:EventBus,Event,x,*args,**kwargs):
+        super().call(super().__class__,EventBus,x,*args,**kwargs)
+        EventBus.callEvent(Event,x,*args,**kwargs)
+
+    def _build(EventBus,Event):
+        return EventContainer(
+            EventBus=EventBus,
+            Event=Event,
+                              )
+
+def registEvent(Event:CommonEvent,EventBus:EventBus):
+    def outter(x:FunctionType):
+        EventBus._regEvent(Event,x)
+        def inner(*args,**kwargs):
+            result=Event().call(EventBus,Event,x,*args,**kwargs)
+            return result
+        return inner
+    return outter
