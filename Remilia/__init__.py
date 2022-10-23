@@ -10,7 +10,6 @@ from . import (
     LiteThread,
     base,
     utils,
-    Logger,
     )
 
 __all__=[
@@ -25,7 +24,6 @@ __all__=[
     "LiteI18n",
     "base",
     "utils",
-    "Logger",
     ]
 
 #__VERSION__#

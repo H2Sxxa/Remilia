@@ -1,396 +1,171 @@
-from abc import ABC, abstractmethod
-import sys
-from colorama import Fore,init
+#from typing import Optional
+import types
+from colorama import Fore
 from time import strftime,localtime
-import platform
-if platform.system() == "Windows":
-    init(autoreset=True,wrap=True)
-class __LiteLog(ABC):
-    @abstractmethod
+
+from .LiteEvent import registEvent,CommonEvent,EventBus
+class LogEvent(CommonEvent):pass
+class DebugEvent(LogEvent):pass
+LogEventBus=EventBus()
+class LogStyle:
+    def __init__(self,
+                 LogHeader="[ <name> | <logger> | <time> ]",
+                 LogBody="<msg>",
+                 LogTimeFormat="%H:%M:%S",
+                 ) -> None:
+        '''
+        ```
+        [ <name> | <logger> | <time> ] <msg>
+        └──────────────┬─────────────┘ └─┬─┘
+                    LogHeader         LogBody
+        ```
+        '''
+        self.LogHeader=LogHeader
+        self.LogBody=LogBody
+        self.LogTimeFormat=LogTimeFormat
+        
+    @property
+    def nowtime(self):
+        return strftime(
+            self.LogTimeFormat,
+            localtime()
+            )
+
+    def buildPlainHeader(self,logger,name):
+        return self.LogHeader.replace("<name>",name).replace("<logger>",logger).replace("<time>",self.nowtime)
+    
+    def buildPlainBody(self,*args):
+        return "".join(map(str,args))
+    
+    def buildPlainLog(self,logger:str,name:str,*arg):
+        return "%s %s" % (
+            self.buildPlainHeader(logger,name),
+            self.buildPlainBody(*arg),
+            )
+    
+    def buildColorLog(self,logger:str,name:str,headercolor:Fore,bodycolor:Fore,*arg):
+        return f"{headercolor}%s {bodycolor}%s" % (
+            self.buildPlainHeader(logger,name),
+            self.buildPlainBody(*arg),
+            )
+        
+class TextStyle:
+    def __init__(self,
+                 headerColor:Fore=Fore.GREEN,
+                 bodyColor:Fore=Fore.RESET,
+                 ) -> None:
+        self.headerColor=headerColor
+        self.bodyColor=bodyColor
+
+class LogRecorder:
     def __init__(self) -> None:
         '''
-        Logger = LiteLog(__name__)
-        '''
-    @abstractmethod
-    def setColor(self,loglevel:str,color:Fore) -> Fore:
-        '''
-        if success , it will return the color of the loglevel\n
-        Logger.setColor("INFO",Fore.GREEN)
-        '''
-    @abstractmethod
-    def setTimeFormat(self,timeformat:str) -> str:
-        '''
-        if success , it will return the format of the time\n
-        Logger.info(1)\n
-        Logger.setTimeFormat("%H_%M_%S")\n
-        Logger.info(1)\n
-        >>>[ INFO | __main__ | 12:34:56 ] 1\n
-        >>>[ INFO | __main__ | 12_34_56 ] 1
-        '''
-    @abstractmethod
-    def setLogFormat(self,logformat:str) -> str:
-        '''
-        if success , it will return the format of the log\n
-        Logger.info(1)\n
-        Logger.setLogFormat("( $infolevel$ | $name$ | $time$ ) $msg$")\n
-        Logger.info(1)\n
-        >>>[ INFO | __main__ | 12:34:56 ] 1\n
-        >>>( INFO | __main__ | 12_34_56 ) 1
-        '''
+        when you add a new print type,there will be a new list in LogRecoder
+        ```python
+        logger=Logger()
+        logger.addPrintType("newprint")
+        logger.newprint(1,2,3)
+        print(type(logger.recorder.newprint))
         
-    @abstractmethod
-    def info(self,msg:any) -> None:
+        <class 'list'>
+        ```
+        '''
+        self.lastplainlog=""
+        self.lastcolorlog=""
+        self.lastfunc=None
+        self.totalplainlog=[]
+        self.totalcolorlog=[]
+        
+    def exportAllLog(self):
         pass
     
-    @abstractmethod
-    def warn(self,msg:any) -> None:
+    def exportCateLog(self,category):
         pass
     
-    @abstractmethod
-    def error(self,msg:any) -> None:
-        pass
-    
-    @abstractmethod
-    def debug(self,msg:any) -> None:
-        pass
-    
-    @abstractmethod
-    def stdout(*values: object,sep,end,file,flush) -> None:
-        '''
-        just a print method\n
-        print=Logger.stdout
-        '''
-    
-    @abstractmethod
-    def getCustomLastlog(self,key:str) -> str:
-        '''
-        if you want to print it in function, use *lastCustomlog in function args
-        '''
-    
-    @abstractmethod
-    def openDebug(self,key:str) -> None:
-        '''
-        key:stdout,write
-        '''
-
-    @abstractmethod
-    def setHide(self,x:bool) -> None:
-        '''
-        if setHide it wont print anything
-        '''
-    
-    @abstractmethod
-    def closeDebug(self,key:str) -> None:
-        '''
-        key:stdout,write
-        '''
-    @abstractmethod
-    def debughere(self,keylist):
-        '''
-        a decorator for easy debug,you can use Logger.DEBUGSTDOUT and others as a keylist here
-        '''
-    @abstractmethod
-    def writeAllLog(self,logpath:str) -> None:
-        '''
-        write all the log in logpath
-        '''
-                
-    @abstractmethod
-    def openWriteStream(self,logpath:str) -> None:
-        '''
-        keep writing the log in info/warn/error\n
-        use closeWriteStream to stop it
-        '''
-    @abstractmethod
-    def closeWriteStream(self,logpath="") -> None:
-        '''
-        close the write stream
-        '''
-    
-    @abstractmethod
-    def apply_logtype(self,key) -> None:
-        '''
-        append it to __log
-        '''
-    
-    @abstractmethod 
-    def apply_logfunc(self,key:str,scope:str,func,*args,**kwargs)-> None:
-        '''
-        use apply_logtype first\n
-        "key":"",\n
-        "scope":"", stdout\n
-        "func":None,\n
-        "args":None,\n
-        "kwargs":None
-        '''
-    
-    @abstractmethod 
-    def apply_logformat(self,key,color,log) -> None:
-        '''
-        use apply_logtype first\n
-        "key":"",\n
-        "color":{\n
-            "INFO":Fore.GREEN,\n
-            "WARN":Fore.YELLOW,\n
-            "ERROR":Fore.RED,\n
-            "DEBUG":Fore.CYAN,\n
-            "TEXT":Fore.RESET\n
-        },
-        "log":"[ $infolevel$ | $name$ | $time$ ] $msg$",
-        '''
-    
-    
-class LiteLog(__LiteLog):
-    def __init__(self,name=__name__) -> None:
-        super().__init__()
-        self.Oriprint = print
-        self.DEBUGSTDOUT=["stdout"]
-        self.DEBUGWRITE=["write"]
-        self.DEBUGSTDOUTWRITE=["stdout","write"]
-        self.__log={
-            "plainlog":[],
-            "forelog":[]
-                    }
-        self.__debug={
-            "stdout":False,
-            "write":False
-        }
-        self.__name=name
-        self.__writeStreamList=[]
-        self.__format={
-            "log":"[ $infolevel$ | $name$ | $time$ ] $msg$",
-            "time":"%H:%M:%S"
-            }
-        self.__color={
-            "INFO":Fore.GREEN,
-            "STDOUT":Fore.GREEN,
-            "WARN":Fore.YELLOW,
-            "ERROR":Fore.RED,
-            "DEBUG":Fore.CYAN,
-            "TEXT":Fore.RESET
-        }
-        self.Hide=False
-        self.__customfunc=[]
+    def classify(self):
+        if self.lastfunc.__name__ not in dir(self):
+            setattr(self,self.lastfunc.__name__,list())
+        loglist=getattr(self,self.lastfunc.__name__)
+        if isinstance(loglist,list):
+            loglist.append(self.lastplainlog)
+        self.totalplainlog.append(self.lastplainlog)
+        self.totalcolorlog.append(self.lastcolorlog)
+        self.__write()
         
-        self.__customformat=[]
+    def __write(self):pass
+    
+class Logger:
+    def __init__(self,
+                 name:str="Logger",
+                 style:LogStyle=LogStyle(),
+                 recorder:LogRecorder=LogRecorder()
+                 ) -> None:
+        '''
+        ## Useage
+        ### add new print type
+        you should know that info/warn/error have been contained in this class,you should not add it mannually
+        use it like following:
+        ```python
+        logger=Logger()
+        logger.info(1,2,3)
+        logger.addPrintType("newprint")
+        logger.newprint(1,2,3)
         
-    def setHide(self,x:bool):
-        self.Hide=x
-    
-    
-    def setColor(self,loglevel,color):
-        super().setColor()
-        loglevel=loglevel.upper()
-        self.__color[loglevel]=color
-        return self.__color[loglevel]
-
-    def setTimeFormat(self,timeformat):
-        super().setTimeFormat()
-        self.__format["time"]=timeformat
-        return self.__format["time"]
-
-    def setLogFormat(self,logformat):
-        super().setLogFormat()
-        self.__format["log"]=logformat
-        return self.__format["log"]
-
-    def __stdoutHandle(func):
-        def stdout_warpper(self,*values: object,**kwargs):
-            fore_stdout=(
-                self.__color[func.__name__.upper()]
-                +self.__format["log"]
-                .replace("$infolevel$",func.__name__.upper())
-                .replace("$time$",self.getTime)
-                .replace("$name$",self.__name)
-                .replace("$msg$",self.__color["TEXT"])
-                )
-            plain_stdout=(
-                self.__format["log"]
-                .replace("$infolevel$",func.__name__.upper())
-                .replace("$time$",self.getTime)
-                .replace("$name$",self.__name)
-                .replace("$msg$","")
-                )
-            if not self.Hide:
-                self.Oriprint(fore_stdout,*values,**kwargs)
-            values=map(str,values)
-            self.plainlog.append(plain_stdout+"".join(values))
-            self.forelog.append(fore_stdout+"".join(values))
-            self.__writeStream()
-        def common_warpper(self,msg):
-            fore_stdout=(
-                self.__color[func.__name__.upper()]
-                +self.__format["log"]
-                .replace("$infolevel$",func.__name__.upper())
-                .replace("$time$",self.getTime)
-                .replace("$name$",self.__name)
-                .replace("$msg$",self.__color["TEXT"]+"%s" % msg)
-                )
-            plain_stdout=(
-                self.__format["log"]
-                .replace("$infolevel$",func.__name__.upper())
-                .replace("$time$",self.getTime)
-                .replace("$name$",self.__name)
-                .replace("$msg$","%s" % msg)
-                )
-            
-            if func.__name__.upper() != "DEBUG" and not self.Hide:
-                self.Oriprint(fore_stdout)
-                self.plainlog.append(plain_stdout)
-                self.forelog.append(fore_stdout)
-                self.__writeStream()
-                
-            elif self.__debug["stdout"] == True and not self.Hide:
-                self.Oriprint(fore_stdout)
-                
-            if self.__debug["write"] == True:
-                self.plainlog.append(plain_stdout)
-                self.forelog.append(fore_stdout)
-                self.__writeStream()
-
-            for csmlogshandle in self.__customformat:
-                self.__log[csmlogshandle["key"]].append(
-                    csmlogshandle["color"][func.__name__.upper()]+
-                    csmlogshandle["log"]
-                    .replace("$infolevel$",func.__name__.upper())
-                    .replace("$time$",self.getTime)
-                    .replace("$name$",self.__name)
-                    .replace("$msg$",csmlogshandle["color"]["TEXT"]+"%s" % msg)
-                )
-
-            for csmfunchandle in self.__customfunc:
-                if csmfunchandle["scope"] == "stdout":
-                    finargs=[]
-                    for arg in csmfunchandle["args"]:
-                        if type(arg) == str:
-                            if "*lastCustomlog" in arg:
-                                arg=arg.replace("*lastCustomlog",self.getCustomLastlog(csmfunchandle["key"]))
-                        finargs.append(arg)
-                    csmfunchandle["func"](*tuple(finargs),**csmfunchandle["kwargs"])
-            return func
-        if func.__name__ != "stdout":
-            return common_warpper
-        else:
-            return stdout_warpper
-
-    @__stdoutHandle
-    def info(self,msg):
-        super().info(msg)
-    
-    @__stdoutHandle
-    def warn(self,msg):
-        super().warn(msg)
-
-    @__stdoutHandle
-    def error(self,msg):
-        super().error(msg)
+        [ INFO | __main__ | 14:31:14 ] 123
+        [ NEWPRINT | __main__ | 14:31:14 ] 123
+        ```
+        you can also use addPrintType and TextStyle to custom your log color
         
-    @__stdoutHandle
-    def debug(self,msg):
-        super().debug(msg)
-    
-    @__stdoutHandle
-    def stdout(*values: object,sep=' ',end='\n',file=sys.stdout,flush=False):
-        super().stdout(*values,sep=' ',end='\n',file=sys.stdout,flush=False)
-    
-    def openDebug(self,key):
-        super().openDebug(key)
-        self.__debug[key]=True
+        ## Extension
+        ### Logger.style <class "LogStyle">
+        ### Logger.recider <class "LogRecoder">
         
-    def closeDebug(self,key):
-        super().closeDebug(key)
-        self.__debug[key]=False
+        '''
+        self.name=name
+        self.style=style
+        self.recoder=recorder
+        self.addPrintType("info")
+        self.addPrintType("warn",TextStyle(Fore.YELLOW,Fore.RESET))
+        self.addPrintType("error",TextStyle(Fore.RED,Fore.RESET))
+        self.isSilent=False
+        self.isDebug=False
+        
+    def setSilent(self,x:bool=False):
+        self.isSilent=x
+        
+    def setDebug(self,x:bool=False):
+        self.isDebug=x
+        
+    @registEvent(DebugEvent,LogEventBus)
+    def debug(self,*args):pass
     
-    def debughere(self,keylist):
-        super().debughere(keylist)
-        def outter(func):
-            def warpper(*args,**kwargs):
-                for key in keylist:
-                    if self.__debug[key]:
-                        pass
-                    else:
-                        for key in keylist:
-                            self.openDebug(key)
-                        func(*args,**kwargs)
-                        for key in keylist:
-                            self.closeDebug(key)
-            return warpper
-        return outter
-    
-    @property
-    def plainlog(self):
-        return self.__log["plainlog"]
-    
-    @property
-    def forelog(self):
-        return self.__log["forelog"]
-    
-    @property
-    def lastplainlog(self):
-        if len(self.__log["plainlog"]) == 0:
+    def addPrintType(self,
+                     name:str,
+                     style:TextStyle=TextStyle(),
+                    ) -> None:
+        def func(self,*args):
+            self.println(func,*args)
+        func.__name__=name
+        func.__style__:TextStyle=style
+        setattr(self,name,types.MethodType(func,self))
+
+    def println(self,func:types.MethodType,*args):
+        plainlog=self.style.buildPlainLog(
+            self.name,
+            func.__name__,
+            *args
+            )
+        colorlog=self.style.buildColorLog(
+            self.name,
+            func.__name__.upper(),
+            func.__style__.headerColor,
+            func.__style__.bodyColor,
+            *args
+            )
+        self.recoder.lastcolorlog=colorlog
+        self.recoder.lastplainlog=plainlog
+        self.recoder.lastfunc=func
+        self.recoder.classify()
+        if self.isSilent:
             return
-        return self.__log["plainlog"][-1]
-    
-    @property
-    def lastforelog(self):
-        if len(self.__log["forelog"]) == 0:
-            return
-        return self.__log["forelog"][-1]
-
-    @property
-    def getTime(self):
-        return strftime(self.__format["time"], localtime())
-    
-    @property
-    def autoLogName(self):
-        return "%s.log" % strftime("%Y%m%d%H%M%S")
-
-    def getCustomLastlog(self,key):
-        super().getCustomLastlog(key)
-        try:
-            return self.__log[key][-1]
-        except Exception as e:
-            return str(e)
-    
-    def writeAllLog(self,logpath=""):
-        if logpath == "":
-            logpath = self.autoLogName
-        with open(logpath,"w",encoding="utf-8") as f:
-            for log in self.__log["plainlog"]:
-                f.write(log+"\n")
-
-    def openWriteStream(self,logpath=""):
-        try:
-            open(logpath,"w",encoding="utf-8")
-        except Exception as e:
-            self.error(e)
-            return
-        self.__writeStreamList.append(logpath)
-        
-    def closeWriteStream(self,logpath=""):
-        try:
-            self.__writeStreamList.remove(logpath)
-        except Exception as e:
-            self.error(e)
-            return
-    
-    def __writeStream(self):
-        if self.__writeStreamList == []:
-            pass
-        else:
-            for writein in self.__writeStreamList:
-                with open(writein,"a",encoding="utf-8") as f:
-                    f.write(self.lastplainlog+"\n")
-                f.close()
-
-    def apply_logtype(self,key):
-        super().apply_logtype(key)
-        self.__log.update({key:[]})
-
-    def apply_logfunc(self,key,scope,func,*args,**kwargs):
-        super().apply_logfunc(key,scope,func,*args,**kwargs)
-        self.__customfunc.append({"key":key,"scope":scope,"func":func,"args":args,"kwargs":kwargs})
-        
-    def apply_logformat(self,key,color,log):
-        super().apply_logformat(key,color,log)
-        self.__customformat.append({"key":key,"color":color,"log":log})
+        print(colorlog)
