@@ -49,7 +49,7 @@ class ThreadHook():
                 pass
             traceback.print_exception(self.exc_type,self.exc_value,self.exc_traceback)
 
-class LiteThread(threading.Thread):
+class RewardThread(threading.Thread):
     def run(self) -> None:
         """Method representing the thread's activity.
 

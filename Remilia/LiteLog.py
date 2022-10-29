@@ -35,7 +35,7 @@ class LogStyle:
         return self.LogHeader.replace("<name>",name).replace("<logger>",logger).replace("<time>",self.nowtime)
     
     def buildPlainBody(self,*args):
-        return "".join(map(str,args))
+        return " ".join(map(str,args))
     
     def buildPlainLog(self,logger:str,name:str,*arg):
         return "%s %s" % (
@@ -50,13 +50,20 @@ class LogStyle:
             )
         
 class TextStyle:
-    def __init__(self,
-                 headerColor:Fore=Fore.GREEN,
-                 bodyColor:Fore=Fore.RESET,
-                 ) -> None:
-        self.headerColor=headerColor
-        self.bodyColor=bodyColor
-
+    def __init__(self,**kwargs) -> None:
+        for key,value in kwargs.items():
+            setattr(self,str(key),value)
+    
+    
+    @staticmethod
+    def buildLogColor(headerColor:Fore=Fore.GREEN,
+                      bodyColor:Fore=Fore.RESET
+                      ):
+        return TextStyle(
+                bodyColor=bodyColor,
+                headerColor=headerColor
+            )
+    
 class LogRecorder:
     def __init__(self) -> None:
         '''
@@ -125,8 +132,8 @@ class Logger:
         self.style=style
         self.recoder=recorder
         self.addPrintType("info")
-        self.addPrintType("warn",TextStyle(Fore.YELLOW,Fore.RESET))
-        self.addPrintType("error",TextStyle(Fore.RED,Fore.RESET))
+        self.addPrintType("warn",TextStyle.buildLogColor(Fore.YELLOW,Fore.RESET))
+        self.addPrintType("error",TextStyle.buildLogColor(Fore.RED,Fore.RESET))
         self.isSilent=False
         self.isDebug=False
         
@@ -141,7 +148,7 @@ class Logger:
     
     def addPrintType(self,
                      name:str,
-                     style:TextStyle=TextStyle(),
+                     style:TextStyle=TextStyle.buildLogColor(),
                     ) -> None:
         def func(self,*args):
             self.println(func,*args)
@@ -168,4 +175,5 @@ class Logger:
         self.recoder.classify()
         if self.isSilent:
             return
-        print(colorlog)
+        else:
+            print(colorlog)

@@ -11,11 +11,12 @@ pip install Remilia
 ## LiteLog
 
 ```python
-from Remilia.LiteLog import LiteLog
+from Remilia import LiteLog
 
-Logger=LiteLog(__name__)
-
-Logger.info("hello")
+logger=LiteLog.Logger(__name__)
+logger.info(1,2,3)
+logger.addPrintType("newprint")
+logger.newprint(1,2,3)
 
 >>>[ INFO | __main__ | 14:58:50 ] hello
 ```
@@ -55,7 +56,7 @@ def hello():
     return "hello"
 
 TVManager=LiteThread.ThreadValueManager()
-TestThread=LiteThread.LiteThread(target=hello)
+TestThread=LiteThread.RewardThread(target=hello)
 TestThread.start()
 print(TVManager.waitResult(TestThread))
 
