@@ -1,8 +1,9 @@
 #from typing import Optional
+from importlib.resources import path
 import types
 from colorama import Fore
 from time import strftime,localtime
-
+from os.path import exists
 from .LiteEvent import registEvent,CommonEvent,EventBus
 class LogEvent(CommonEvent):pass
 class DebugEvent(LogEvent):pass
@@ -48,7 +49,7 @@ class LogStyle:
             self.buildPlainHeader(logger,name),
             self.buildPlainBody(*arg),
             )
-        
+
 class TextStyle:
     def __init__(self,**kwargs) -> None:
         for key,value in kwargs.items():
@@ -82,12 +83,27 @@ class LogRecorder:
         self.lastfunc=None
         self.totalplainlog=[]
         self.totalcolorlog=[]
-        
-    def exportAllLog(self):
-        pass
+        self.__subscribepaths=[]
     
-    def exportCateLog(self,category):
-        pass
+    def subscribePath(self,path:str,resetfile=True) -> None:
+        self.__subscribepaths.append(path)
+        if resetfile:
+            with open(path,"w",encoding="utf-8") as f:
+                f.write("")
+                
+    def exportAllLog(self,path:str):
+        with open(path,"w",encoding="utf-8") as f:
+            f.write("\n".join(self.totalcolorlog))
+    
+    def exportCateLog(self,category:str,path:str):
+        with open(path,"w",encoding="utf-8") as f:
+            f.write("\n".join(self.getLogfromCate(category)))
+    
+    def getLogfromCate(self,category:str):
+        if category in dir(self):
+            return getattr(self,category)
+        else:
+            return []
     
     def classify(self):
         if self.lastfunc.__name__ not in dir(self):
@@ -97,10 +113,16 @@ class LogRecorder:
             loglist.append(self.lastplainlog)
         self.totalplainlog.append(self.lastplainlog)
         self.totalcolorlog.append(self.lastcolorlog)
-        self.__write()
-        
-    def __write(self):pass
+        self.__writeSub()
     
+    def __writeSub(self):
+        return [ self.__write(_) for _ in self.__subscribepaths ]
+    
+    
+    def __write(self,path:str):
+        mode=lambda: "a" if exists(path) else "w"
+        with open(path,mode(),encoding="utf-8") as f:
+            f.write(self.lastplainlog+"\n")
 class Logger:
     def __init__(self,
                  name:str="Logger",
@@ -113,7 +135,7 @@ class Logger:
         you should know that info/warn/error have been contained in this class,you should not add it mannually
         use it like following:
         ```python
-        logger=Logger()
+        logger=Logger(__name__)
         logger.info(1,2,3)
         logger.addPrintType("newprint")
         logger.newprint(1,2,3)
@@ -125,12 +147,12 @@ class Logger:
         
         ## Extension
         ### Logger.style <class "LogStyle">
-        ### Logger.recider <class "LogRecoder">
+        ### Logger.recorder <class "LogRecoder">
         
         '''
         self.name=name
         self.style=style
-        self.recoder=recorder
+        self.recorder=recorder
         self.addPrintType("info")
         self.addPrintType("warn",TextStyle.buildLogColor(Fore.YELLOW,Fore.RESET))
         self.addPrintType("error",TextStyle.buildLogColor(Fore.RED,Fore.RESET))
@@ -159,7 +181,7 @@ class Logger:
     def println(self,func:types.MethodType,*args):
         plainlog=self.style.buildPlainLog(
             self.name,
-            func.__name__,
+            func.__name__.upper(),
             *args
             )
         colorlog=self.style.buildColorLog(
@@ -169,10 +191,10 @@ class Logger:
             func.__style__.bodyColor,
             *args
             )
-        self.recoder.lastcolorlog=colorlog
-        self.recoder.lastplainlog=plainlog
-        self.recoder.lastfunc=func
-        self.recoder.classify()
+        self.recorder.lastcolorlog=colorlog
+        self.recorder.lastplainlog=plainlog
+        self.recorder.lastfunc=func
+        self.recorder.classify()
         if self.isSilent:
             return
         else:
