@@ -1,4 +1,5 @@
 from inspect import getframeinfo,stack
+from types import MethodType
 
 
 def Deprecated(func):
@@ -25,3 +26,14 @@ def Redirect(tofunc):
             return result
         return inner
     return outter
+
+def AnnoMethod(func):
+    '''
+    use it in a class
+    #FIX use 'delattr' to replace 'del'
+    '''
+    try:
+        del func
+        return
+    except:pass
+    return func.__class__

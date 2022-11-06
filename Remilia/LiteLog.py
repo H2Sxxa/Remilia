@@ -1,16 +1,22 @@
 #from typing import Optional
-from importlib.resources import path
 import types
-from colorama import Fore
+from colorama import Fore,Style,Back,init
 from time import strftime,localtime
+from platform import system
 from os.path import exists
 from .LiteEvent import registEvent,CommonEvent,EventBus
+from .utils.DecoratorUtils import AnnoMethod
 class LogEvent(CommonEvent):pass
 class DebugEvent(LogEvent):pass
 LogEventBus=EventBus()
+if system() == "Windows":
+    init(wrap=True)
+else:
+    init(wrap=False)
+    
 class LogStyle:
     def __init__(self,
-                 LogHeader="[ <name> | <logger> | <time> ]",
+                 LogHeader="<headercolor>[ <name> | <logger> | <time> ]<bodycolor>",
                  LogBody="<msg>",
                  LogTimeFormat="%H:%M:%S",
                  ) -> None:
@@ -43,10 +49,12 @@ class LogStyle:
             self.buildPlainHeader(logger,name),
             self.buildPlainBody(*arg),
             )
+    def buildColorHeader(self,logger:str,name:str,headercolor:Fore,bodycolor:Fore):
+        return self.LogHeader.replace("<headercolor>",headercolor).replace("<bodycolor>",bodycolor).replace("<name>",name).replace("<logger>",logger).replace("<time>",self.nowtime)
     
     def buildColorLog(self,logger:str,name:str,headercolor:Fore,bodycolor:Fore,*arg):
-        return f"{headercolor}%s {bodycolor}%s" % (
-            self.buildPlainHeader(logger,name),
+        return f"%s %s" % (
+            self.buildColorHeader(logger,name,headercolor,bodycolor),
             self.buildPlainBody(*arg),
             )
 
@@ -199,3 +207,21 @@ class Logger:
             return
         else:
             print(colorlog)
+            
+    @AnnoMethod
+    def info():
+        '''
+        A method built by addPrintType()
+        '''
+    @AnnoMethod
+    def warn():pass
+    @AnnoMethod
+    def error():pass
+    
+class __DefaultStyle:
+    @property
+    def default_LogStyle1(self):
+        return LogStyle(
+            LogHeader=f" <time> <headercolor>[ <logger> ] {Style.BRIGHT}[ <name> ]<bodycolor>{Style.RESET_ALL}"
+        )
+DefaultStyle=__DefaultStyle()
