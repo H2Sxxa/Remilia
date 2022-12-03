@@ -8,12 +8,14 @@ from . import (
     LiteResource,
     LiteI18n,
     LiteThread,
+    LiteFunctions,
     base,
     utils,
     )
 
 __all__=[
     "LiteLog",
+    "LiteFunctions",
     "LiteMixin",
     "LiteThread",
     "LitePGL",

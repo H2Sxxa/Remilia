@@ -1,4 +1,4 @@
-from . import DecoratorUtils,thread
+from . import DecoratorUtils,thread,os
 from . import (
     cli,
     net
@@ -7,6 +7,7 @@ from . import (
 __all__=[
     "DecoratorUtils",
     "cli",
+    "os",
     "thread",
     "net",
 ]
