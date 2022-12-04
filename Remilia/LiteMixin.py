@@ -1,4 +1,4 @@
-import types
+import types,gc,traceback
 
 def MixInClass(pyClass:object, mixInClass:object, makeAncestor:bool=False,ignoreMagicMethod=False) -> None:
    '''
@@ -41,12 +41,23 @@ def InjectMethod(pyClass:object):
       return func
    return warpper
 
+def gc_Mixin(pyObj,pyProperty,PropertyName):
+   '''
+   A rude mixin method,can ignore the builtin things...
+   '''
+   try:
+      gc.get_referents(pyObj.__dict__)[0][PropertyName]=pyProperty
+   except Exception as e:
+      traceback.print_exc()
+      raise MixInError("No such inject dict",pyObj,"has no __dict__")
+
 def MixInFunction(pyFunction:types.FunctionType,mixinFunction:types.FunctionType):
    '''
    a ugly function , but ...\n
    use it with static function,otherwise it may cause a error
    '''
    pyFunction.__code__=mixinFunction.__code__
+   
 class OriMethod:
    def __init__(self,pyClass:object) -> None:
       '''
