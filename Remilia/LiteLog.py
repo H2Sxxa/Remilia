@@ -1,11 +1,10 @@
 #from typing import Optional
-import types
+import types,re
 from colorama import Fore,Style,Back,init
 from time import strftime,localtime
 from platform import system
 from os.path import exists
 from .LiteEvent import registEvent,CommonEvent,EventBus
-from .utils.DecoratorUtils import AnnoMethod
 class LogEvent(CommonEvent):pass
 class DebugEvent(LogEvent):pass
 LogEventBus=EventBus()
@@ -38,24 +37,32 @@ class LogStyle:
             localtime()
             )
 
-    def buildPlainHeader(self,logger,name):
+    def initRenderHeader(self,logger,name):
         return self.LogHeader.replace("<name>",name).replace("<logger>",logger).replace("<time>",self.nowtime)
+    
+    def buildPlainHeader(self,logger,name):
+        return re.sub(r"[<](.*?)[>]","",self.initRenderHeader(logger,name))
     
     def buildPlainBody(self,*args):
         return " ".join(map(str,args))
     
-    def buildPlainLog(self,logger:str,name:str,*arg):
+    def buildPlainLog(self,logger:str,name:str,*args):
         return "%s %s" % (
             self.buildPlainHeader(logger,name),
-            self.buildPlainBody(*arg),
+            self.buildPlainBody(*args),
             )
-    def buildColorHeader(self,logger:str,name:str,headercolor:Fore,bodycolor:Fore):
-        return self.LogHeader.replace("<headercolor>",headercolor).replace("<bodycolor>",bodycolor).replace("<name>",name).replace("<logger>",logger).replace("<time>",self.nowtime)
+        
+    def buildColorHeader(self,logger:str,name:str,style):
+        header=self.initRenderHeader(logger,name)
+        for temp in set(re.findall(r"<(.+?)>",header)):
+            if temp in dir(style):
+                header=header.replace("<"+temp+">",getattr(style,temp))
+        return re.sub(r"[<](.*?)[>]","",header)
     
-    def buildColorLog(self,logger:str,name:str,headercolor:Fore,bodycolor:Fore,*arg):
+    def buildColorLog(self,logger:str,name:str,style,*args):
         return f"%s %s" % (
-            self.buildColorHeader(logger,name,headercolor,bodycolor),
-            self.buildPlainBody(*arg),
+            self.buildColorHeader(logger,name,style),
+            self.buildPlainBody(*args),
             )
 
 class TextStyle:
@@ -65,12 +72,15 @@ class TextStyle:
     
     
     @staticmethod
-    def buildLogColor(headerColor:Fore=Fore.GREEN,
-                      bodyColor:Fore=Fore.RESET
+    def buildLogColor(headercolor:Fore=Fore.GREEN,
+                      bodycolor:Fore=Fore.RESET
                       ):
+        '''
+        A default static method
+        '''
         return TextStyle(
-                bodyColor=bodyColor,
-                headerColor=headerColor
+                bodycolor=bodycolor,
+                headercolor=headercolor
             )
     
 class LogRecorder:
@@ -195,8 +205,7 @@ class Logger:
         colorlog=self.style.buildColorLog(
             self.name,
             func.__name__.upper(),
-            func.__style__.headerColor,
-            func.__style__.bodyColor,
+            func.__style__,
             *args
             )
         self.recorder.lastcolorlog=colorlog
@@ -208,14 +217,11 @@ class Logger:
         else:
             print(colorlog)
             
-    @AnnoMethod
     def info():
         '''
         A method built by addPrintType()
         '''
-    @AnnoMethod
     def warn():pass
-    @AnnoMethod
     def error():pass
     
 class __DefaultStyle:
