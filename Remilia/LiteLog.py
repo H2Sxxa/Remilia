@@ -41,7 +41,7 @@ class LogStyle:
         return self.LogHeader.replace("<name>",name).replace("<logger>",logger).replace("<time>",self.nowtime)
     
     def buildPlainHeader(self,logger,name):
-        return re.sub(r"[<](.*?)[>]","",self.initRenderHeader(logger,name))
+        return re.sub(r"=:(.*?):=","",re.sub(r"[<](.*?)[>]","",self.initRenderHeader(logger,name)))
     
     def buildPlainBody(self,*args):
         return " ".join(map(str,args))
@@ -57,7 +57,7 @@ class LogStyle:
         for temp in set(re.findall(r"<(.+?)>",header)):
             if temp in dir(style):
                 header=header.replace("<"+temp+">",getattr(style,temp))
-        return re.sub(r"[<](.*?)[>]","",header)
+        return re.sub(r"[<](.*?)[>]","",header).replace("=:","").replace(":=","")
     
     def buildColorLog(self,logger:str,name:str,style,*args):
         return f"%s %s" % (
@@ -111,7 +111,7 @@ class LogRecorder:
                 
     def exportAllLog(self,path:str):
         with open(path,"w",encoding="utf-8") as f:
-            f.write("\n".join(self.totalcolorlog))
+            f.write("\n".join(self.totalplainlog))
     
     def exportCateLog(self,category:str,path:str):
         with open(path,"w",encoding="utf-8") as f:
@@ -228,6 +228,6 @@ class __DefaultStyle:
     @property
     def default_LogStyle1(self):
         return LogStyle(
-            LogHeader=f" <time> <headercolor>[ <logger> ] {Style.BRIGHT}[ <name> ]<bodycolor>{Style.RESET_ALL}"
+            LogHeader=f" <time> <headercolor>[ <logger> ] =:{Style.BRIGHT}:=[ <name> ]<bodycolor>=:{Style.RESET_ALL}:="
         )
 DefaultStyle=__DefaultStyle()
