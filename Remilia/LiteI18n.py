@@ -1,5 +1,4 @@
 from typing import Generic, List, TypeVar
-from .base.Files import MultKVFiles
 
 class TranslateManager(dict):
     def _switch(self,locations:List[dict],comparedict:dict):
@@ -11,6 +10,3 @@ class TranslateManager(dict):
     
     def translateAble(self,x:any,varname:str):
         self.update({varname:x})
-
-class I18n(MultKVFiles):
-    pass

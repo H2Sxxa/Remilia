@@ -1,41 +1,24 @@
 import os,pathlib
+
 class Path:
-    def __init__(self,path:str,checkexist=False) -> None:
+    def __init__(self,path:str) -> None:
         self.path=path
-        if not os.path.exists(self.path):
-            if checkexist:
-                raise OSError("No such file '%s'" % self.path)
-            else:
-                self.ISFILE=False
-                self.ISDIRECTORY=False
-        else:
-            self._updateStatus()
-            
-        self.parentdir=os.path.dirname(self.path)
-        self.abspath=os.path.abspath(self.path)
-        self.encoding="utf-8"
-        
-    def _updateStatus(self):
-        if os.path.isdir(self.path):
-            self.ISDIRECTORY=True
-            self.ISFILE=False
-        elif os.path.isfile(self.path):
-            self.ISDIRECTORY=False
-            self.ISFILE=True
-        else:
-            self.ISFILE=False
-            self.ISDIRECTORY=False
-            
-    def write(self,mode,x,encoding=None):
-        self._updateStatus()
-        if self.ISFILE:
-            if not encoding:
-                encoding=self.encoding
-            with open(self.abspath,mode,encoding=encoding) as File:
-                File.write(x)
-            
-    def getParentDir(self):
-        return Path(os.path.dirname(self.abspath))
+    
+    @property
+    def abspath(self):
+        return os.path.abspath(self.path)
+    
+    @property
+    def parentdir(self):
+        return os.path.dirname(self.path)
+    
+    @property
+    def isexist(self) -> bool:
+        return os.path.exists(self.path)
+
+    @property
+    def parentPath(self):
+        return Path(self.parentdir)
     
     def glob(self,pattern):
         """Iterate over this subtree and yield all existing files (of any
@@ -50,75 +33,56 @@ class Path:
         """
         return list(pathlib.Path(self.abspath).rglob(pattern))
     
-    def setEncoding(self,encoding="utf-8"):
-        self.encoding=encoding
-        return self
-    
-    def buildDirectory(self):
-        if not self.isexist:
-            os.makedirs(self.abspath)
-            self._updateStatus()
-        return self
-    
-    def buildFile(self,contant=""):
-        if not self.isexist:
-            self.write("w",contant,self.encoding)
-            self._updateStatus()
-        return self
-    
-    @property
-    def Attrs(self):
-        self._updateStatus()
-        if self.ISFILE:
-            return FileAttr(self)
-        elif self.ISDIRECTORY:
-            return DirectoryAttr(self)
-        
-    @property
-    def isexist(self):
-        return os.path.exists(self.abspath)
-    
-    @property
-    def text(self):
-        self._updateStatus()
-        if self.ISFILE:
-            with open(self.abspath,"r",encoding=self.encoding) as f:
-                return f.read()
-        else:
-            return None
-        
-    @property
-    def content(self):
-        self._updateStatus()
-        if self.ISFILE:
-            with open(self.abspath,"rb",encoding=self.encoding) as f:
-                return f.read()
-        else:
-            return None
-        
     def __enter__(self):
         return self
     
     def __exit__(self,*args,**kwargs):
         pass
+class File(Path):
+    def __init__(self, path: str,encoding="utf-8") -> None:
+        super().__init__(path)
+        self.encoding=encoding
+        
+    @property
+    def Attrs(self):
+        return FileAttr(self)
+
+    @property
+    def text(self):
+        with open(self.abspath,"r",encoding=self.encoding) as f:
+            return f.read()
+        
+    @property
+    def content(self):
+        with open(self.abspath,"rb") as f:
+            return f.read()
+    
+    def write(self,mode,text):
+        with open(self.abspath,mode,encoding=self.encoding) as f:
+            f.write(text)
+    
+class Directory(Path):
+    def __init__(self, path: str) -> None:
+        super().__init__(path)
+    
     
 class FileAttr:
-    def __init__(self,pathType:Path) -> None:
-        self.pathType=pathType
-        self.createtime=os.path.getctime(self.pathType.abspath)
-        self.modifytime=os.path.getmtime(self.pathType.abspath)
-        self.accesstime=os.path.getatime(self.pathType.abspath)
-        self.exttuple=os.path.splitext(self.pathType.abspath)
-        self.ext=os.path.splitext(self.pathType.abspath)[-1]
+    def __init__(self,path:Path) -> None:
+        self.path=path
+        self.createtime=os.path.getctime(self.path.abspath)
+        self.modifytime=os.path.getmtime(self.path.abspath)
+        self.accesstime=os.path.getatime(self.path.abspath)
+        self.exttuple=os.path.splitext(self.path.abspath)
+        self.ext=os.path.splitext(self.path.abspath)[-1]
     
     @property
     def filesize(self):
-        return os.path.getsize(self.pathType.abspath)
+        return os.path.getsize(self.path.abspath)
     
     @property
     def fileAllext(self):
         result=[]
-        tempPath=self.pathType.abspath
+        tempPath=self.path.abspath
         lastTemp=""
         while len(os.path.splitext(tempPath)) > 1:
             handle=os.path.splitext(tempPath)
