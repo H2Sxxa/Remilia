@@ -30,6 +30,9 @@ jobs:
       with:
         python-version: '3.8'
     
+    - name: Setup & Test Lib
+      run: |
+        python lib_tests.py
     # 安装依赖
     - name: Install dependencies
       run: |
