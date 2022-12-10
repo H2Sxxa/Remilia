@@ -1,4 +1,4 @@
-from . import Remilia
+import Remilia
 
 #Logger
 Logger=Remilia.LiteLog.Logger(__name__)
