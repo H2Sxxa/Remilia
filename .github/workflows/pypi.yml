@@ -32,6 +32,7 @@ jobs:
     
     - name: Setup & Test Lib
       run: |
+        pip install -r requirements.txt
         python lib_tests.py
     # 安装依赖
     - name: Install dependencies
