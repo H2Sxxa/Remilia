@@ -1,13 +1,10 @@
 #from typing import Optional
 import types,re
+from typing import List
 from colorama import Fore,Style,Back,init
 from time import strftime,localtime
 from platform import system
 from os.path import exists
-from .LiteEvent import registEvent,CommonEvent,EventBus
-class LogEvent(CommonEvent):pass
-class DebugEvent(LogEvent):pass
-LogEventBus=EventBus()
 if system() == "Windows":
     init(wrap=True)
 else:
@@ -82,6 +79,18 @@ class TextStyle:
                 bodycolor=bodycolor,
                 headercolor=headercolor
             )
+
+class SimpleLog:
+    def __init__(self,plainlog:str,colorlog:str,logname:str) -> None:
+        self.plainlog=plainlog
+        self.colorlog=colorlog
+        self.logname=logname
+    
+    def __str__(self) -> str:
+        return self.plainlog
+
+    def __clstr__(self) -> str:
+        return self.colorlog
     
 class LogRecorder:
     def __init__(self) -> None:
@@ -99,8 +108,7 @@ class LogRecorder:
         self.lastplainlog=""
         self.lastcolorlog=""
         self.lastfunc=None
-        self.totalplainlog=[]
-        self.totalcolorlog=[]
+        self.totallog=[]
         self.__subscribepaths=[]
     
     def subscribePath(self,path:str,resetfile=True) -> None:
@@ -109,13 +117,14 @@ class LogRecorder:
             with open(path,"w",encoding="utf-8") as f:
                 f.write("")
                 
-    def exportAllLog(self,path:str):
+    def exportLog(self,path:str,ignore:List[str]=[]):
+        fintotallog=[ _ for _ in self.totallog if _.logname not in ignore]
         with open(path,"w",encoding="utf-8") as f:
-            f.write("\n".join(self.totalplainlog))
+            f.write("\n".join(map(str,fintotallog)))
     
     def exportCateLog(self,category:str,path:str):
         with open(path,"w",encoding="utf-8") as f:
-            f.write("\n".join(self.getLogfromCate(category)))
+            f.write("\n".join(map(str,self.getLogfromCate(category))))
     
     def getLogfromCate(self,category:str):
         if category in dir(self):
@@ -128,9 +137,8 @@ class LogRecorder:
             setattr(self,self.lastfunc.__name__,list())
         loglist=getattr(self,self.lastfunc.__name__)
         if isinstance(loglist,list):
-            loglist.append(self.lastplainlog)
-        self.totalplainlog.append(self.lastplainlog)
-        self.totalcolorlog.append(self.lastcolorlog)
+            loglist.append(SimpleLog(self.lastplainlog,self.lastcolorlog,self.lastfunc.__name__))
+        self.totallog.append(SimpleLog(self.lastplainlog,self.lastcolorlog,self.lastfunc.__name__))
         self.__writeSub()
     
     def __writeSub(self):
@@ -141,6 +149,7 @@ class LogRecorder:
         mode=lambda: "a" if exists(path) else "w"
         with open(path,mode(),encoding="utf-8") as f:
             f.write(self.lastplainlog+"\n")
+            
 class Logger:
     def __init__(self,
                  name:str="Logger",
@@ -176,15 +185,13 @@ class Logger:
         self.addPrintType("error",TextStyle.buildLogColor(Fore.RED,Fore.RESET))
         self.isSilent=False
         self.isDebug=False
+        self.addPrintType("debug",TextStyle.buildLogColor(Fore.CYAN))
         
     def setSilent(self,x:bool=False):
         self.isSilent=x
         
     def setDebug(self,x:bool=False):
         self.isDebug=x
-        
-    @registEvent(DebugEvent,LogEventBus)
-    def debug(self,*args):pass
     
     def addPrintType(self,
                      name:str,
@@ -215,6 +222,8 @@ class Logger:
         if self.isSilent:
             return
         else:
+            if func.__name__ == "debug" and not self.isDebug:
+                return
             print(colorlog)
             
     def info():
@@ -223,6 +232,7 @@ class Logger:
         '''
     def warn():pass
     def error():pass
+    def debug():pass
     
 class __DefaultStyle:
     @property

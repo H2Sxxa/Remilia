@@ -38,6 +38,9 @@ class Path:
     
     def __exit__(self,*args,**kwargs):
         pass
+    
+    def unlink(self):
+        os.unlink(self.abspath)
 class File(Path):
     def __init__(self, path: str,encoding="utf-8") -> None:
         super().__init__(path)
@@ -60,7 +63,6 @@ class File(Path):
     def write(self,mode,text):
         with open(self.abspath,mode,encoding=self.encoding) as f:
             f.write(text)
-    
 class Directory(Path):
     def __init__(self, path: str) -> None:
         super().__init__(path)
