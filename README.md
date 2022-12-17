@@ -10,7 +10,7 @@ pip install Remilia
 ## LiteLog
 
 ```python
-from Remilia import LiteLog
+from Remilia.lite import LiteLog
 
 logger=LiteLog.Logger(__name__)
 logger.info(1,2,3)
@@ -23,7 +23,7 @@ logger.newprint(1,2,3)
 ## LiteEvent
 
 ```python
-from Remilia.LiteEvent import CommonEvent,EventBus,registEvent,EventContainer,Pre,Post
+from Remilia.lite.LiteEvent import CommonEvent,EventBus,registEvent,EventContainer,Pre,Post
 
 Bus1=EventBus()
 
@@ -49,7 +49,7 @@ run1()
 ## LiteThread
 
 ```python
-from Remilia import LiteThread
+from Remilia.lite import LiteThread
 
 def hello():
     return "hello"
@@ -65,7 +65,7 @@ print(TVManager.waitResult(TestThread))
 ## LiteMixin
 
 ```python
-from Remilia import LiteMixin
+from Remilia.lite import LiteMixin
 class A:
     def __init__(self) -> None:
         self.hello()
@@ -97,7 +97,7 @@ A()
 
 #main
 
-from Remilia import LitePGL,LiteResource
+from Remilia.lite import LitePGL,LiteResource
 PGLoader=LitePGL.PluginLoader()
 LoadPoint1=LitePGL.PluginLoadPoint(PGLoader,"loadpoint1")
 PGLoader.setInterface(globals())
