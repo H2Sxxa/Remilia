@@ -1,6 +1,6 @@
 from abc import ABC,abstractmethod
 
-from ..LiteResource import File,Directory, PathError
+from ..lite.LiteResource import File,Directory, PathError
 
 
 class CommonFileBase(ABC):

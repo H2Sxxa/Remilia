@@ -1,12 +1,12 @@
-import Remilia
+from Remilia import lite
 #LiteLog
-Logger=Remilia.LiteLog.Logger(__name__,style=Remilia.LiteLog.DefaultStyle.default_LogStyle1)
+Logger=lite.LiteLog.Logger(__name__,style=lite.LiteLog.DefaultStyle.default_LogStyle1)
 Logger.info("Import Lib Successfully")
 Logger.setDebug(True)
 Logger.debug("Open Debug Successfully")
 Logger.recorder.exportCateLog("info","test.log")
 #LiteResource
-testfile=Remilia.LiteResource.File("test.log")
+testfile=lite.LiteResource.File("test.log")
 Logger.debug("[File] test.log <Status>")
 Logger.debug("exist",testfile.isexist)
 Logger.debug("size",testfile.Attrs.filesize)

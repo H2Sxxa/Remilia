@@ -1,6 +1,6 @@
 from abc import ABC
 
-from ..LiteResource import File,Directory, PathError
+from ..lite.LiteResource import File,Directory, PathError
 
 class CommonDirectorysBase(ABC):
     def __init__(
