@@ -1,4 +1,13 @@
-![https://raw.githubusercontent.com/IAXRetailer/Remilia/main/background.png](https://raw.githubusercontent.com/IAXRetailer/Remilia/main/background.png "PID 96145490")
+<div align=center>
+  <img src="background.png"  alt="[BG](https://raw.githubusercontent.com/IAXRetailer/Remilia/main/background.png)"/>
+  <h1 align="center">Remilia</h1> 
+</div>
+<div align=center>
+  <img src="https://img.shields.io/badge/python-3.8+-blue" alt="python">
+  <img src="https://img.shields.io/github/languages/code-size/IAXRetailer/Remilia" alt="size">
+  <img src="https://img.shields.io/github/license/IAXRetailer/Remilia" alt="license">
+</div>
+
 # Install
 
 ```shell
