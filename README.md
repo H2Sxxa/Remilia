@@ -1,5 +1,5 @@
 <div align=center>
-  <img src="background.png"  alt="[BG](https://raw.githubusercontent.com/IAXRetailer/Remilia/main/background.png)"/>
+  <img src="https://raw.githubusercontent.com/IAXRetailer/Remilia/main/background.png"  alt="[BG](https://raw.githubusercontent.com/IAXRetailer/Remilia/main/background.png)"/>
   <h1 align="center">Remilia</h1> 
 </div>
 <div align=center>
