@@ -1,10 +1,27 @@
 from ..lite.LiteResource import File
 from ..lite.LiteData import JsonFile
 
+class DBError(Exception):pass
+
 class Table(dict):
-    def setname(self,tablename:str) -> None:
+    def sync(self):
+        if "db" in dir(self):
+            if isinstance(self.db,JsonDB):
+                self.uploadtoDB(self.db)
+    def __AutoSync(self):
+        if self.autosync:
+            self.sync()
+    def setAutoSync(self,x:bool):
+        self.autosync=x
+    def uploadtoDB(self,db:"JsonDB"):
+        db.updateTable(self)
+    def setDB(self,db:"JsonDB"):
+        self.db=db
+    def setname(self,tablename:str) -> "Table":
         self.oriname=tablename
         self.tablename=tablename
+        self.__AutoSync()
+        return self
     def getoriname(self) -> str:
         return self.oriname
     def getname(self) -> str:
@@ -13,8 +30,10 @@ class Table(dict):
         return self[key]
     def haskey(self,key:str) -> bool:
         return self.__contains__(key)
-    def setkey(self,key:str,value:any) -> None:
+    def setkey(self,key:str,value:any) -> "Table":
         self.update({key:value})
+        self.__AutoSync()
+        return self
 class JsonDB:
     def __init__(self,dbfile:File,dbname:str,indent:int=4) -> None:
         isinit=dbfile.isexist
@@ -38,15 +57,19 @@ class JsonDB:
     def createTable(self,tablename:str) -> None:
         data=self.jsonfile.read("data")
         tables=self.jsonfile.read("tables")
-        tables.append(tablename)
-        data[0]["tables"].update({tablename:{}})
-        self.jsonfile.write("tables",tables,indent=self.indent)
-        self.jsonfile.write("data",data,indent=self.indent)
-        
+        if tablename not in tables:
+            tables.append(tablename)
+            data[0]["tables"].update({tablename:{}})
+            self.jsonfile.write("tables",tables,indent=self.indent)
+            self.jsonfile.write("data",data,indent=self.indent)
+        else:
+            raise DBError(f"Table '{tablename}' exists")
     def getTable(self,tablename:str) -> Table:
         if self.hasTable(tablename):
             table=Table(self.jsonfile.read("data")[0]["tables"][tablename])
             table.setname(tablename)
+            table.setDB(self)
+            table.setAutoSync(False)
             return table
         
     def updateTable(self,table:Table) -> None:
@@ -68,3 +91,7 @@ class JsonDB:
             del data[0]["tables"][tablename]
             self.jsonfile.write("tables",tables,indent=self.indent)
             self.jsonfile.write("data",data,indent=self.indent)
+        else:
+            raise DBError(f"No such table '{tablename}'")
+    def listTable(self) -> list:
+        return self.jsonfile.read("tables")
