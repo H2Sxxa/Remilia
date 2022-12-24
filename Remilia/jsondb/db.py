@@ -67,9 +67,9 @@ class JsonDB:
     def getTable(self,tablename:str) -> Table:
         if self.hasTable(tablename):
             table=Table(self.jsonfile.read("data")[0]["tables"][tablename])
+            table.setAutoSync(False)
             table.setname(tablename)
             table.setDB(self)
-            table.setAutoSync(False)
             return table
         
     def updateTable(self,table:Table) -> None:
