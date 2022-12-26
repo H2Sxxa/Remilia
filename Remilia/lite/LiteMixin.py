@@ -41,6 +41,15 @@ def InjectMethod(pyClass:object):
       return func
    return warpper
 
+def InjectClass(pyClass:object):
+   '''
+   A decorator for easy inject function
+   '''
+   def warpper(clas:object):
+      setattr(pyClass,clas.__name__,clas)
+      return clas
+   return warpper
+
 def gc_Mixin(pyObj,pyProperty,PropertyName):
    '''
    A rude mixin method,can ignore the builtin things...
