@@ -1,5 +1,6 @@
 from ..lite.LiteResource import File
 from ..lite.LiteData import JsonFile
+from typing import List
 
 class DBError(Exception):pass
 
@@ -54,6 +55,9 @@ class JsonDB:
         else:
             return False
         
+    def getname(self):
+        return self.dbname
+    
     def createTable(self,tablename:str) -> None:
         data=self.jsonfile.read("data")
         tables=self.jsonfile.read("tables")
@@ -71,7 +75,10 @@ class JsonDB:
             table.setname(tablename)
             table.setDB(self)
             return table
-        
+    
+    def getAllTable(self) -> List[Table]:
+        return [ self.getTable(_) for _ in self.listTable() ]
+    
     def updateTable(self,table:Table) -> None:
         if table.getname() == table.getoriname():
             data=self.jsonfile.read("data")
@@ -93,5 +100,6 @@ class JsonDB:
             self.jsonfile.write("data",data,indent=self.indent)
         else:
             raise DBError(f"No such table '{tablename}'")
+        
     def listTable(self) -> list:
         return self.jsonfile.read("tables")
