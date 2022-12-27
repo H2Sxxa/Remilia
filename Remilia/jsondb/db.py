@@ -31,6 +31,10 @@ class Table(dict):
         return self[key]
     def haskey(self,key:str) -> bool:
         return self.__contains__(key)
+    def delkey(self,key:str) -> "Table":
+        self.__delitem__(key)
+        self.__AutoSync()
+        return self
     def setkey(self,key:str,value:any) -> "Table":
         self.update({key:value})
         self.__AutoSync()
