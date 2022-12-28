@@ -65,7 +65,8 @@ class ByPassResolver(AbstractResolver):
             future.cancel()
 
         if len(ips) == 0:
-            raise Exception("Failed to resolve {}".format(host))
+            pass
+            #raise Exception("Failed to resolve {}".format(host))
 
         result = []
         for i in ips:
@@ -88,7 +89,7 @@ class ByPassResolver(AbstractResolver):
             await task
             return task.result()
         except Exception as e:
-            print("caught:", repr(e))
+            #print("caught:", repr(e))
             return await self.read_result(tasks)
             
     async def close(self) -> None:
@@ -97,7 +98,8 @@ class ByPassResolver(AbstractResolver):
     async def parse_result(self, hostname, response) -> List[str]:
         data = json.loads(response)
         if data['Status'] != 0:
-            raise Exception("Failed to resolve {}".format(hostname))
+            pass
+            #raise Exception("Failed to resolve {}".format(hostname))
 
         # Pattern to match IPv4 addresses 
         pattern = re.compile(
@@ -126,8 +128,9 @@ class ByPassResolver(AbstractResolver):
                 if resp.status == 200:
                     return await self.parse_result(hostname, await resp.text())
                 else:
-                    raise Exception("Failed to resolve {} with {}: HTTP Status {}".format(
-                        hostname, endpoint, resp.status))
+                    pass
+                    #raise Exception("Failed to resolve {} with {}: HTTP Status {}".format(
+                    #    hostname, endpoint, resp.status))
 
 
 class PixivClient:
