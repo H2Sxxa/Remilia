@@ -65,8 +65,7 @@ class ByPassResolver(AbstractResolver):
             future.cancel()
 
         if len(ips) == 0:
-            pass
-            #raise Exception("Failed to resolve {}".format(host))
+            raise Exception("Failed to resolve {}".format(host))
 
         result = []
         for i in ips:
@@ -122,16 +121,17 @@ class ByPassResolver(AbstractResolver):
             "do": "false",
             "cd": "false",
         }
-
-        async with aiohttp.ClientSession() as session:
-            async with session.get(endpoint, params=params, headers={"accept": "application/dns-json"}, timeout=ClientTimeout(total=timeout)) as resp:
-                if resp.status == 200:
-                    return await self.parse_result(hostname, await resp.text())
-                else:
-                    pass
-                    #raise Exception("Failed to resolve {} with {}: HTTP Status {}".format(
-                    #    hostname, endpoint, resp.status))
-
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(endpoint, params=params, headers={"accept": "application/dns-json"}, timeout=ClientTimeout(total=timeout)) as resp:
+                    if resp.status == 200:
+                        return await self.parse_result(hostname, await resp.text())
+                    else:
+                        pass
+                        #raise Exception("Failed to resolve {} with {}: HTTP Status {}".format(
+                        #    hostname, endpoint, resp.status))
+        except:
+            pass
 
 class PixivClient:
     def __init__(self, limit=30, timeout=10, env=False, internal=False, proxy=None, bypass=False):
