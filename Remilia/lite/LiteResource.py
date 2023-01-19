@@ -1,4 +1,4 @@
-import os,pathlib
+import os,pathlib,json
 
 class Path:
     def __init__(self,path:str) -> None:
@@ -59,6 +59,12 @@ class File(Path):
     def content(self):
         with open(self.abspath,"rb") as f:
             return f.read()
+    @property
+    def json(self):
+        try:
+            return json.loads(self.text)
+        except Exception as e:
+            return e
     
     def write(self,mode,text):
         with open(self.abspath,mode,encoding=self.encoding) as f:

@@ -1,5 +1,5 @@
-from . import exeutils
+from . import win
 
 __all__=(
-    "exeutils",
+    "win",
 )
