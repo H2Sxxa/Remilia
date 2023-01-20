@@ -1,15 +1,15 @@
-from .Files import KVFileBase
+from .files import KVFileBase
 from . import (
-    API,
-    Files,
-    Events,
-    Directorys,
+    apis,
+    directorys,
+    events,
+    files,
     )
 
 __all__=[
-    "API",
-    "Files",
+    "apis",
+    "files",
     "KVFileBase",
-    "Events",
-    "Directorys",
+    "events",
+    "directorys",
          ]

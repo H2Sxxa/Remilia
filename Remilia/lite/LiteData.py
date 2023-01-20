@@ -1,5 +1,5 @@
 from json import dumps, loads
-from ..base.Files import KVFileBase
+from ..base.files import KVFileBase
 from .LiteResource import File
 
 

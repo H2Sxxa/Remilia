@@ -1,6 +1,9 @@
+from .db import JsonDB
 class DBVar:
-    @staticmethod
-    def newfrom(vartype:type,*args,**kwargs) -> any:
-        class cusVar(vartype):
-            pass
-        return cusVar(*args,**kwargs)
+    def setdb(self,db:JsonDB):
+        self.db=db
+        
+    def sync(self):
+        if "db" in dir(self):
+            if isinstance(self.db,JsonDB):
+                self.uploadtoDB(self.db)
