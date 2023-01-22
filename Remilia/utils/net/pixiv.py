@@ -37,7 +37,13 @@ import re
 from aiohttp.abc import AbstractResolver
 from aiohttp import ClientTimeout
 
+'''
+come from pixiv_async
 
+https://pypi.org/project/PixivPy-Async/
+
+LICENSE: https://github.com/Mikubill/pixivpy-async/blob/master/LICENSE UNLICENSE
+'''
 class ByPassResolver(AbstractResolver):
 
     def __init__(self, endpoints=None, force_hosts=True):

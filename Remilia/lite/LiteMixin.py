@@ -66,7 +66,18 @@ def MixInFunction(pyFunction:types.FunctionType,mixinFunction:types.FunctionType
    use it with static function,otherwise it may cause a error
    '''
    pyFunction.__code__=mixinFunction.__code__
-   
+
+def mount(target:types.FunctionType):
+   '''
+   A decorator to warp func to another func as property
+   '''
+   def warpper(func:types.FunctionType):
+      setattr(target,func.__name__,func)
+      def execute(*args,**kwargs):
+         return func(*args,**kwargs)
+      return execute
+   return warpper
+
 class OriMethod:
    def __init__(self,pyClass:object) -> None:
       '''
