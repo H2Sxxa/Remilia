@@ -32,27 +32,27 @@ logger.newprint(1,2,3)
 ## LiteEvent
 
 ```python
-from Remilia.lite.LiteEvent import CommonEvent,EventBus,registEvent,EventContainer,Pre,Post
+from Remilia.lite.LiteEvent import SubcribeEvent,BaseEvent,TriggerEvent
 
-Bus1=EventBus()
+class TestEvent(BaseEvent):
+    @staticmethod
+    def instance():
+        return EventLib.TestEvent
 
-@registEvent(CommonEvent,Bus1)
-def run1():
-    print("Event run now")
+class EventLib:
+    TestEvent=TestEvent()
 
-@Bus1.EventHandle(CommonEvent,Point=Pre)
-def t1(Conter:EventContainer):
-    print("Before the %s" % Conter.Event)
+@TriggerEvent(TestEvent.instance())
+def foo():
+    print("I am event")
+    
+@SubcribeEvent
+def test(event:TestEvent):
+    print("Cancel it!")
+    event.cancel()
 
-@Bus1.EventHandle(CommonEvent,Point=Post)
-def t2(Conter:EventContainer):
-    print("after the %s" % Conter.Event)
-
-run1()
-
->>>Before the <class 'Remilia.LiteEvent.CommonEvent'>
->>>Event run now
->>>after the <class 'Remilia.LiteEvent.CommonEvent'>
+foo()
+>>>Cancel it!
 ```
 
 ## LiteThread
