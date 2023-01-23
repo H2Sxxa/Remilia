@@ -32,7 +32,8 @@ logger.newprint(1,2,3)
 ## LiteEvent
 
 ```python
-from Remilia.lite.LiteEvent import SubcribeEvent,BaseEvent,TriggerEvent
+from types import FunctionType
+from Remilia.lite.LiteEvent import SubcribeEvent,BaseEvent,TriggerEvent,EventFunction
 
 class TestEvent(BaseEvent):
     @staticmethod
@@ -47,11 +48,14 @@ def foo():
     print("I am event")
     
 @SubcribeEvent
-def test(event:TestEvent):
+def test(event:TestEvent,ef:EventFunction):
+    print(ef.__name__)
     print("Cancel it!")
     event.cancel()
 
 foo()
+
+>>>foo
 >>>Cancel it!
 ```
 

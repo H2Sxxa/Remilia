@@ -1,11 +1,12 @@
 from ..base.events import EventBase as __EventBase
-from ..base.events import SubcribeEvent,WithPriority,TriggerEvent
+from ..base.events import SubcribeEvent,WithPriority,TriggerEvent,EventFunction
 
 
 __all__ = [
     "SubcribeEvent",
     "WithPriority",
-    "TriggerEvent"
+    "TriggerEvent",
+    "EventFunction"
 ]
 
 class BaseEvent(__EventBase):

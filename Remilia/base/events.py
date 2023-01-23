@@ -3,6 +3,9 @@ from abc import ABC, abstractmethod
 from types import FunctionType
 from typing import List
 from inspect import signature,_empty
+
+class CancelError(Exception):pass
+class EventFunction:pass
 class EventBase(ABC):
     def __init__(self) -> None:
         self.__block=False
@@ -24,7 +27,7 @@ class EventBase(ABC):
     def call_event(self,func:FunctionType):
         self.Data.Calls=sorted(self.Data.Calls,key=lambda x: getPriority(x))
         for sub in self.Data.Calls:
-            executesub(sub)
+            executesub(sub,func)
             if self.__block:
                 self.__block=False
                 return False
@@ -32,8 +35,6 @@ class EventBase(ABC):
     
     class Data:
         Calls:List[FunctionType]=[]
-
-class CancelError(Exception):pass
 
 def getPriority(func:FunctionType):
         return 0 if "__event_priority__" not in dir(func) else getattr(func,"__event_priority__")
@@ -62,13 +63,11 @@ def loadinto(func:FunctionType):
             signarg.annotation.instance().Data.Calls.append(func)
             return
 
-def executesub(func:FunctionType):
+def executesub(func:FunctionType,eventfunc:FunctionType):
     paras={}
     for _,signarg in signature(func).parameters.items():
-        if issubclass(signarg.annotation,EventBase):
-            paras.update({signarg.name:signarg.annotation.instance()})
-        elif signarg.default != _empty:
-            paras.update({signarg.name:signarg.default})
-        else:
-            paras.update({signarg.name:None})
+        if issubclass(signarg.annotation,EventBase):paras.update({signarg.name:signarg.annotation.instance()})
+        elif issubclass(signarg.annotation,EventFunction):paras.update({signarg.name:eventfunc})
+        elif signarg.default != _empty:paras.update({signarg.name:signarg.default})
+        else:paras.update({signarg.name:None})
     func(**paras)
