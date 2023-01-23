@@ -1,7 +1,14 @@
-from ..base.events import EventBase,SubcribeEvent,WithPriority,TriggerEvent
+from ..base.events import EventBase as __EventBase
+from ..base.events import SubcribeEvent,WithPriority,TriggerEvent
 
 
-class BaseEvent(EventBase):
+__all__ = [
+    "SubcribeEvent",
+    "WithPriority",
+    "TriggerEvent"
+]
+
+class BaseEvent(__EventBase):
     @staticmethod
     def instance():
         return LibEvents.BaseEvent
