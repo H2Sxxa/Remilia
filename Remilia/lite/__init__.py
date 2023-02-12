@@ -9,10 +9,12 @@ from . import (
     LiteI18n,
     LiteThread,
     LiteFunctions,
+    v2,
     )
 
 __all__=[
     "LiteLog",
+    "v2",
     "LiteFunctions",
     "LiteMixin",
     "LiteThread",
