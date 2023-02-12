@@ -9,8 +9,18 @@ if system() == "Windows":
     init(wrap=True)
 else:
     init(wrap=False)
-    
-class LogStyle:
+
+def onlyRender(x:str):
+    return "=:%s:=" % x
+def searchInPrinterStyle(x:str):
+    return "<%s>"%x
+
+LOGLEVEL_DEBUG=4
+LOGLEVEL_INFO=5
+LOGLEVEL_WARN=6
+LOGLEVEL_ERROR=7
+
+class LogFactory:
     def __init__(self,
                  LogHeader="<headercolor>[ <name> | <logger> | <time> ]<bodycolor>",
                  LogBody="<msg>",
@@ -62,7 +72,7 @@ class LogStyle:
             self.buildPlainBody(*args),
             )
 
-class TextStyle:
+class PrinterStyle:
     def __init__(self,**kwargs) -> None:
         for key,value in kwargs.items():
             setattr(self,str(key),value)
@@ -75,22 +85,28 @@ class TextStyle:
         '''
         A default static method
         '''
-        return TextStyle(
+        return PrinterStyle(
                 bodycolor=bodycolor,
                 headercolor=headercolor
             )
-
+class __PrintType:
+    __level__:int=5
+    __name__:str
+    __style__:PrinterStyle
+    
 class SimpleLog:
-    def __init__(self,plainlog:str,colorlog:str,logname:str) -> None:
+    def __init__(self,plainlog:str,colorlog:str,logname:str,level:int) -> None:
         self.plainlog=plainlog
         self.colorlog=colorlog
         self.logname=logname
+        self.level=level
     
     def __str__(self) -> str:
         return self.plainlog
 
     def __clstr__(self) -> str:
         return self.colorlog
+
     
 class LogRecorder:
     def __init__(self) -> None:
@@ -107,8 +123,8 @@ class LogRecorder:
         '''
         self.lastplainlog=""
         self.lastcolorlog=""
-        self.lastfunc=None
-        self.totallog=[]
+        self.lastfunc:__PrintType
+        self.totallog:List[SimpleLog]=[]
         self.__subscribepaths=[]
     
     def subscribePath(self,path:str,resetfile=True) -> None:
@@ -121,7 +137,27 @@ class LogRecorder:
         fintotallog=[ _ for _ in self.totallog if _.logname not in ignore]
         with open(path,"w",encoding="utf-8") as f:
             f.write("\n".join(map(str,fintotallog)))
-    
+            
+    def exportlevelLog(self,path:str,level:int,mode="="):
+        '''
+        mode has '=','>','<','>=','<=',None(Ignore level)
+        '''
+        if mode == '=':
+            condition=lambda _level: _level == level
+        elif mode == '>':
+            condition=lambda _level: _level > level
+        elif mode == '<':
+            condition=lambda _level: _level < level
+        elif mode == '>=':
+            condition=lambda _level: _level >= level
+        elif mode == '<=':
+            condition=lambda _level: _level <= level
+        else:
+            condition=lambda _:True
+        fintotallog=[ _ for _ in self.totallog if condition(_.level)]
+        with open(path,"w",encoding="utf-8") as f:
+            f.write("\n".join(map(str,fintotallog)))
+            
     def exportCateLog(self,category:str,path:str):
         with open(path,"w",encoding="utf-8") as f:
             f.write("\n".join(map(str,self.getLogfromCate(category))))
@@ -137,8 +173,8 @@ class LogRecorder:
             setattr(self,self.lastfunc.__name__,list())
         loglist=getattr(self,self.lastfunc.__name__)
         if isinstance(loglist,list):
-            loglist.append(SimpleLog(self.lastplainlog,self.lastcolorlog,self.lastfunc.__name__))
-        self.totallog.append(SimpleLog(self.lastplainlog,self.lastcolorlog,self.lastfunc.__name__))
+            loglist.append(SimpleLog(self.lastplainlog,self.lastcolorlog,self.lastfunc.__name__,self.lastfunc.__level__))
+        self.totallog.append(SimpleLog(self.lastplainlog,self.lastcolorlog,self.lastfunc.__name__,self.lastfunc.__level__))
         self.__writeSub()
     
     def __writeSub(self):
@@ -153,7 +189,7 @@ class LogRecorder:
 class Logger:
     def __init__(self,
                  name:str="Logger",
-                 style:LogStyle=LogStyle(),
+                 factory:LogFactory=LogFactory(),
                  recorder:LogRecorder=LogRecorder()
                  ) -> None:
         '''
@@ -170,46 +206,46 @@ class Logger:
         [ INFO | __main__ | 14:31:14 ] 123
         [ NEWPRINT | __main__ | 14:31:14 ] 123
         ```
-        you can also use addPrintType and TextStyle to custom your log color
+        you can also use addPrintType and PrinterStyle to custom your log color
         
         ## Extension
-        ### Logger.style <class "LogStyle">
+        ### Logger.style <class "LogFactory">
         ### Logger.recorder <class "LogRecoder">
         
         '''
         self.name=name
-        self.style=style
+        self.factory=factory
         self.recorder=recorder
-        self.addPrintType("info")
-        self.addPrintType("warn",TextStyle.buildLogColor(Fore.YELLOW,Fore.RESET))
-        self.addPrintType("error",TextStyle.buildLogColor(Fore.RED,Fore.RESET))
-        self.isSilent=False
-        self.isDebug=False
-        self.addPrintType("debug",TextStyle.buildLogColor(Fore.CYAN))
+        self.addPrintType("debug",4,PrinterStyle.buildLogColor(Fore.CYAN))
+        self.addPrintType("info",5)
+        self.addPrintType("warn",6,PrinterStyle.buildLogColor(Fore.YELLOW,Fore.RESET))
+        self.addPrintType("error",7,PrinterStyle.buildLogColor(Fore.RED,Fore.RESET))
+
+        self.level=5
+
         
-    def setSilent(self,x:bool=False):
-        self.isSilent=x
-        
-    def setDebug(self,x:bool=False):
-        self.isDebug=x
+    def setlevel(self,level:int):
+        self.level=level
     
     def addPrintType(self,
                      name:str,
-                     style:TextStyle=TextStyle.buildLogColor(),
+                     level:int=5,
+                     style:PrinterStyle=PrinterStyle.buildLogColor(),
                     ) -> None:
         def func(self,*args):
             self.println(func,*args)
         func.__name__=name
-        func.__style__:TextStyle=style
+        func.__level__=level
+        func.__style__:PrinterStyle=style
         setattr(self,name,types.MethodType(func,self))
 
     def println(self,func:types.MethodType,*args):
-        plainlog=self.style.buildPlainLog(
+        plainlog=self.factory.buildPlainLog(
             self.name,
             func.__name__.upper(),
             *args
             )
-        colorlog=self.style.buildColorLog(
+        colorlog=self.factory.buildColorLog(
             self.name,
             func.__name__.upper(),
             func.__style__,
@@ -219,25 +255,17 @@ class Logger:
         self.recorder.lastplainlog=plainlog
         self.recorder.lastfunc=func
         self.recorder.classify()
-        if self.isSilent:
-            return
-        else:
-            if func.__name__ == "debug" and not self.isDebug:
-                return
+        if func.__level__ >= self.level:
             print(colorlog)
             
-    def info():
-        '''
-        A method built by addPrintType()
-        '''
+    def info():pass
     def warn():pass
     def error():pass
     def debug():pass
-    
 class __DefaultStyle:
     @property
     def default_LogStyle1(self):
-        return LogStyle(
-            LogHeader=f" <time> <headercolor>[ <logger> ] =:{Style.BRIGHT}:=[ <name> ]<bodycolor>=:{Style.RESET_ALL}:="
+        return LogFactory(
+            LogHeader=f" <time> <headercolor>[ <logger> ] {onlyRender(Style.BRIGHT)}[ <name> ]<bodycolor>{onlyRender(Style.RESET_ALL)}"
         )
 DefaultStyle=__DefaultStyle()

@@ -1,8 +1,8 @@
 from Remilia import lite
 #LiteLog
-Logger=lite.LiteLog.Logger(__name__,style=lite.LiteLog.DefaultStyle.default_LogStyle1)
+Logger=lite.LiteLog.Logger(__name__,factory=lite.LiteLog.DefaultStyle.default_LogStyle1)
+Logger.setlevel(lite.LiteLog.LOGLEVEL_DEBUG)
 Logger.info("Import Lib Successfully")
-Logger.setDebug(True)
 Logger.debug("Open Debug Successfully")
 Logger.recorder.exportCateLog("info","test.log")
 #LiteResource

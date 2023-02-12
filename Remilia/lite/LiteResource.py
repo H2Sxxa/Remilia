@@ -1,16 +1,8 @@
-import os,json
-from pathlib import Path as __Path, WindowsPath
-from typing import Any
-class Path(__Path):
-    def __new__(cls, *args: str, **kwargs: Any):
-        if cls is Path:
-            cls = WindowsPath if os.name == 'nt' else PosixPath
-        self = cls._from_parts(args, init=False)
-        if not self._flavour.is_supported:
-            raise NotImplementedError("cannot instantiate %r on your system"
-                                      % (cls.__name__,))
-        self._init()
-        return self
+import os,pathlib,json
+
+class Path:
+    def __init__(self,path:str) -> None:
+        self.path=path
     
     @property
     def abspath(self):
@@ -28,11 +20,27 @@ class Path(__Path):
     def parentPath(self):
         return Path(self.parentdir)
     
+    def glob(self,pattern):
+        """Iterate over this subtree and yield all existing files (of any
+        kind, including directories) matching the given relative pattern.
+        """
+        return list(pathlib.Path(self.abspath).glob(pattern))
+    
+    def rglob(self,pattern):
+        """Recursively yield all existing files (of any kind, including
+        directories) matching the given relative pattern, anywhere in
+        this subtree.
+        """
+        return list(pathlib.Path(self.abspath).rglob(pattern))
+    
     def __enter__(self):
         return self
     
     def __exit__(self,*args,**kwargs):
         pass
+    
+    def __str__(self) -> str:
+        return self.abspath
     
     def unlink(self):
         os.unlink(self.abspath)
@@ -67,10 +75,13 @@ class File(Path):
 class Directory(Path):
     def __init__(self, path: str) -> None:
         super().__init__(path)
-    
+        
+    @property
+    def Attrs(self):
+        return DirectoryAttr(self)
     
 class FileAttr:
-    def __init__(self,path:Path) -> None:
+    def __init__(self,path:File) -> None:
         self.path=path
         self.createtime=os.path.getctime(self.path.abspath)
         self.modifytime=os.path.getmtime(self.path.abspath)
@@ -99,7 +110,7 @@ class FileAttr:
         return result
 
 class DirectoryAttr:
-    def __init__(self,pathType:Path) -> None:
+    def __init__(self,pathType:Directory) -> None:
         self.pathType=pathType
         self.createtime=os.path.getctime(self.pathType.abspath)
         self.modifytime=os.path.getmtime(self.pathType.abspath)
