@@ -1,20 +1,29 @@
 import os,pathlib,json
 
 class Path:
-    def __init__(self,path:str) -> None:
+    def __init__(self,path:str,force_abs=True) -> None:
         self.path=path
+        self.force_abs=force_abs
+    
+    @property
+    def __get_path(self):
+        return self.abspath if self.force_abs else self.path
     
     @property
     def abspath(self):
-        return os.path.abspath(self.path)
+        return os.path.abspath(self.__get_path)
+    
+    @property
+    def name(self):
+        return os.path.basename(self.__get_path)
     
     @property
     def parentdir(self):
-        return os.path.dirname(self.path)
+        return os.path.dirname(self.__get_path)
     
     @property
     def isexist(self) -> bool:
-        return os.path.exists(self.path)
+        return os.path.exists(self.__get_path)
 
     @property
     def parentPath(self):
@@ -24,14 +33,14 @@ class Path:
         """Iterate over this subtree and yield all existing files (of any
         kind, including directories) matching the given relative pattern.
         """
-        return list(pathlib.Path(self.abspath).glob(pattern))
+        return list(pathlib.Path(self.__get_path).glob(pattern))
     
     def rglob(self,pattern):
         """Recursively yield all existing files (of any kind, including
         directories) matching the given relative pattern, anywhere in
         this subtree.
         """
-        return list(pathlib.Path(self.abspath).rglob(pattern))
+        return list(pathlib.Path(self.__get_path).rglob(pattern))
     
     def __enter__(self):
         return self
@@ -40,10 +49,10 @@ class Path:
         pass
     
     def __str__(self) -> str:
-        return self.abspath
+        return self.__get_path
     
     def unlink(self):
-        os.unlink(self.abspath)
+        os.unlink(self.__get_path)
 class File(Path):
     def __init__(self, path: str,encoding="utf-8") -> None:
         super().__init__(path)

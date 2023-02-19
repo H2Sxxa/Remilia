@@ -10,16 +10,21 @@ if system() == "Windows":
     init(wrap=True)
 else:
     init(wrap=False)
-
-def onlyRender(x:str):
-    return "=:%s:=" % x
-def searchInPrinterStyle(x:str):
-    return "<%s>"%x
-
+    
 LOGLEVEL_DEBUG=4
 LOGLEVEL_INFO=5
 LOGLEVEL_WARN=6
 LOGLEVEL_ERROR=7
+
+def onlyRender(x:str):
+    return "=:%s:=" % x
+
+def searchInPrinterStyle(x:str):
+    return "<%s>"%x
+
+def defaultprint(self,*args):
+    self.println(defaultprint,*args)
+    
 
 class LogFactory:
     def __init__(self,
@@ -234,10 +239,10 @@ class Logger:
                      style:PrinterStyle=PrinterStyle.buildLogColor(),
                      customfunc=None,
                     ) -> None:
-        def func(self,*args):
-            self.println(func,*args)
         if customfunc:
             func=customfunc
+        else:
+            func=defaultprint
         func.__name__=name
         func.__level__=level
         func.__style__:PrinterStyle=style
