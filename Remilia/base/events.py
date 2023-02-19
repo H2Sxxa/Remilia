@@ -1,12 +1,20 @@
 
-from abc import ABC, abstractmethod
+from abc import ABC, abstractclassmethod
 from types import FunctionType
 from typing import List
 from inspect import signature,_empty
 
 class CancelError(Exception):pass
 class EventFunction:pass
-class EventBase(ABC):
+
+class IHasInstance(ABC):
+    @abstractclassmethod
+    def instance():
+        '''
+        return the instance of your event
+        '''
+        pass
+class EventBase:
     def __init__(self) -> None:
         self.__block=False
     
@@ -20,7 +28,7 @@ class EventBase(ABC):
         else:
             raise CancelError("uncancelable event %s" % self.__class__.__name__)
 
-    @abstractmethod
+    @abstractclassmethod
     def instance() -> "EventBase":
         return None
 
@@ -35,7 +43,7 @@ class EventBase(ABC):
     
     class Data:
         Calls:List[FunctionType]=[]
-
+        
 def getPriority(func:FunctionType):
         return 0 if "__event_priority__" not in dir(func) else getattr(func,"__event_priority__")
 

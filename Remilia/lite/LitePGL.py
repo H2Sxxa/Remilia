@@ -9,7 +9,9 @@ class PluginManager:
         self.plugins=[]
         
     def load_plugin(self,path:Path):pass
-
+    
+    
+    
     def __load(self,path:Path):
         if isinstance(path,File):
             path:File
