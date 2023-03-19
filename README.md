@@ -23,10 +23,10 @@ from Remilia.lite import LiteLog
 
 logger=LiteLog.Logger(__name__)
 logger.info(1,2,3)
-logger.addPrintType("newprint")
 logger.newprint(1,2,3)
 
->>>[ INFO | __main__ | 14:58:50 ] hello
+>>>[ INFO | __main__ | 14:58:50 ] 1,2,3
+>>>[ NEWPRINT | __main__ | 14:58:50 ] 1,2,3
 ```
 
 ## LiteEvent

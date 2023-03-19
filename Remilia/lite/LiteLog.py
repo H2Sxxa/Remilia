@@ -1,4 +1,5 @@
 #from typing import Optional
+from functools import partial
 import types,re
 from typing import List
 from colorama import Fore,Style,Back,init
@@ -9,16 +10,21 @@ if system() == "Windows":
     init(wrap=True)
 else:
     init(wrap=False)
-
-def onlyRender(x:str):
-    return "=:%s:=" % x
-def searchInPrinterStyle(x:str):
-    return "<%s>"%x
-
+    
 LOGLEVEL_DEBUG=4
 LOGLEVEL_INFO=5
 LOGLEVEL_WARN=6
 LOGLEVEL_ERROR=7
+
+def onlyRender(x:str):
+    return "=:%s:=" % x
+
+def searchInPrinterStyle(x:str):
+    return "<%s>"%x
+
+def defaultprint(self,*args):
+    self.println(defaultprint,*args)
+    
 
 class LogFactory:
     def __init__(self,
@@ -223,7 +229,7 @@ class Logger:
 
         self.level=5
 
-        
+
     def setlevel(self,level:int):
         self.level=level
     
@@ -231,9 +237,12 @@ class Logger:
                      name:str,
                      level:int=5,
                      style:PrinterStyle=PrinterStyle.buildLogColor(),
+                     customfunc=None,
                     ) -> None:
-        def func(self,*args):
-            self.println(func,*args)
+        if customfunc:
+            func=customfunc
+        else:
+            func=defaultprint
         func.__name__=name
         func.__level__=level
         func.__style__:PrinterStyle=style
@@ -258,6 +267,17 @@ class Logger:
         if func.__level__ >= self.level:
             print(colorlog)
             
+    def __getattr__(self, name: str) -> None:
+        if name.startswith("__") and name.endswith("__"):
+            raise AttributeError(
+                f"'{self.__class__.__name__}' object has no attribute '{name}'"
+            )
+        return partial(self.call_print, name)
+    
+    def call_print(self,name,*args,**kwargs):
+        self.addPrintType(name)
+        getattr(self,name)(*args,**kwargs)
+    
     def info():pass
     def warn():pass
     def error():pass
