@@ -11,7 +11,7 @@ class Path:
     
     @property
     def abspath(self):
-        return os.path.abspath(self.__get_path)
+        return os.path.abspath(self.path)
     
     @property
     def name(self):

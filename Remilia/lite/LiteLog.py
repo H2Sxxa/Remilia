@@ -22,10 +22,6 @@ def onlyRender(x:str):
 def searchInPrinterStyle(x:str):
     return "<%s>"%x
 
-def defaultprint(self,*args):
-    self.println(defaultprint,*args)
-    
-
 class LogFactory:
     def __init__(self,
                  LogHeader="<headercolor>[ <name> | <logger> | <time> ]<bodycolor>",
@@ -237,8 +233,10 @@ class Logger:
                      name:str,
                      level:int=5,
                      style:PrinterStyle=PrinterStyle.buildLogColor(),
-                     customfunc=None,
+                     customfunc:types.FunctionType=None,
                     ) -> None:
+        def defaultprint(self,*args):
+            self.println(defaultprint,*args)
         if customfunc:
             func=customfunc
         else:
