@@ -42,7 +42,9 @@ class EventInstance:
         self.args=[]
         self.block=False
         self.event=event
-        
+    def getType(self) -> EventBase:
+        return self.event
+    
     def cancel(self):
         if self.event.cancelable:
             self.block=True
@@ -50,7 +52,7 @@ class EventInstance:
             raise CancelError("uncancelable event %s" % self.__class__.__name__)
         return self
     
-    def isBlock(self):
+    def isBlock(self) -> bool:
         return self.block
     
     def withProperty(self,*args,**kwargs):
