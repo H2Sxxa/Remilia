@@ -2,7 +2,8 @@
 from abc import ABC
 from types import FunctionType
 from typing import List
-from inspect import signature,_empty
+
+from Remilia.utils.SignParas import ParaFilter
 
 class CancelError(Exception):pass
 class EventFunction:pass
@@ -87,19 +88,16 @@ def WithPriority(priority:int=0):
     return SubcribeEvent
 
 def loadinto(func:FunctionType):
-    for _,signarg in signature(func).parameters.items():
-        if issubclass(signarg.annotation,EventBase):
-            signarg.annotation.getData(signarg.annotation).Calls.append(func)
-            return
+    pf=ParaFilter(func)
+    for e in pf.check_get(EventBase):
+        print(e)
+        e.annotation.getData(e.annotation).Calls.append(func)
 
 
 def executesub(func:FunctionType,eventfunc:FunctionType,eventinstance:EventInstance,event:EventBase):
-    paras={}
-    for _,signarg in signature(func).parameters.items():
-        if issubclass(signarg.annotation,EventBase):paras.update({signarg.name:signarg.annotation})
-        elif issubclass(signarg.annotation,EventFunction):paras.update({signarg.name:eventfunc})
-        elif issubclass(signarg.annotation,EventInstance):paras.update({signarg.name:eventinstance})
-        elif issubclass(signarg.annotation,EventSet):paras.update({signarg.name:EventSet(etype=event,einstance=eventinstance,efunction=eventfunc)})
-        elif signarg.default != _empty:paras.update({signarg.name:signarg.default})
-        else:paras.update({signarg.name:None})
-    func(**paras)
+    pf=ParaFilter(func)
+    pf.check_put_anno(EventBase)
+    pf.check_put(EventFunction,eventfunc)
+    pf.check_put(EventInstance,eventinstance)
+    pf.check_put(EventSet,EventSet(etype=event,einstance=eventinstance,efunction=eventfunc))
+    func(*pf.args,**pf.kwargs)
