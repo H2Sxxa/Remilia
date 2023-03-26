@@ -19,22 +19,22 @@ class ParaFilter:
         return issubclass(sub,raw)
     
     def check_put(self,atype,value):
-        map(self.kwargs.update,[value for _ in self.check_get(atype)])
+        self.kwargs.update(*[{_.name:value} for _ in self.check_get(atype)])
 
     def check_put_anno(self,atype):
-        map(self.kwargs.update,[_.annotation for _ in self.check_get(atype)])
+        self.kwargs.update(*[{_.name:_.annotation} for _ in self.check_get(atype)])
         
     def check_put_handle(self,atype,func):
-        map(self.kwargs.update,[func(_) for _ in self.check_get(atype)])
+        self.kwargs.update(*[{_.name:func(_)} for _ in self.check_get(atype)])
 
     def check_get(self,atype):
         return [_ for _ in self.signargs if self.__check(atype,_.annotation)]
     
     def load_default(self):
-        map(self.kwargs.update,[{_.name:_.default} for _ in self.signargs if _.default != _empty])
+        self.kwargs.update(*[{_.name:_.default} for _ in self.signargs if _.default != _empty])
         
     def fill_none(self):
-        map(self.kwargs.update,[{_.name:None} for _ in self.signargs if _.default == _empty and _.name not in self.kwargs])
+        self.kwargs.update(*[{_.name:None} for _ in self.signargs if _.default == _empty and _.name not in self.kwargs])
         
     def __enter__(self):
         return self
