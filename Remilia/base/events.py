@@ -90,7 +90,6 @@ def WithPriority(priority:int=0):
 def loadinto(func:FunctionType):
     pf=ParaFilter(func)
     for e in pf.check_get(EventBase):
-        print(e)
         e.annotation.getData(e.annotation).Calls.append(func)
 
 
