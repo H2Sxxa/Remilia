@@ -2,9 +2,7 @@ from functools import partial
 from Remilia.base.files import KVFileBase,File
 from Remilia.lite.LiteEvent import BaseEvent,TriggerEvent,SubcribeEvent
 from ..LiteData import JsonFile,YamlFile
-Configs=[]
-def get_config(obj):
-    return [_ for _ in Configs if _==obj]
+from ..LiteMixin import safe_mixin
 def collect(target):
     return [{_:getattr(target,_)} for _ in dir(target) if not _.startswith("__") and not _.endswith("_") and not _.startswith("_") and  not _.endswith("_")]
 class ConfigError(Exception):pass
@@ -27,15 +25,16 @@ class Temp:
                     fin.update({k:v})
         return fin
     
-def check_to_dict():pass
 class ConfigSetting:
     model:KVFileBase=YamlFile
     model_ins:KVFileBase=None
     path:File=None
+    regenerate:bool=False
     def __init__(self,**kwargs) -> None:
         '''
         para model:KVFileBase=YamlFile
         para path:File=None
+        para regenerate:bool=False
         '''
         for k,v in kwargs.items():
             setattr(self,k,v)
@@ -76,34 +75,50 @@ class Cate:
 class Config:
     def __init__(self,setting:ConfigSetting) -> None:
         self.setting=setting
-    def push(self):
-        for liter in collect(self.obj):
+    def push(self,target):
+        for liter in collect(target):
             for k,v in liter.items():
                 if isinstance(v,Cate):
                     self.setting.model_ins.write(k,v.toDict())
                 elif isinstance(v,Temp):
                     self.setting.model_ins.write(k,v.__to_dict__())
                 else:
-                    print(k,v)
                     self.setting.model_ins.write(k,v)
-    def get(self):
+    def get(self,target):
         for k,v in self.setting.model_ins.FileDict.items():
             if isinstance(v,dict):
-                setattr(self.obj,k,Temp().__to_class__(v))
+                if hasattr(target,k):
+                    safe_mixin(getattr(target,k),Temp().__to_class__(v))
             else:
-                setattr(self.obj,k,v)
+                setattr(target,k,v)
     def sync(self):
         try:
-            self.get()
+            self.get(self.obj)
         except:
             pass
-        self.push()
+        self.push(self.obj)
+        
+    def regenerate(self):
+        try:
+            self.get(self.obj)
+        except:
+            pass
+        for liter in collect(self.obj):
+            for k,v in liter.items():
+                if hasattr(self.rawobj,k):
+                    setattr(self.rawobj,k,v)
+        self.setting.model_ins.File.write("w","{}")
+        self.push(self.rawobj)
+        
     def __call__(self,obj):
+        self.rawobj=obj()
         obj=obj()
         self.obj=obj
+        if self.setting.regenerate:
+            self.regenerate()
         self.sync()
         @SubcribeEvent
         def _(_:ConfigSyncEvent):
             self.sync()
-        Configs.append({self.obj:self})
+        setattr(self.obj,"__config__",self)
         return obj

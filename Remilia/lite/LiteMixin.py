@@ -1,5 +1,11 @@
 import types,gc,traceback
 
+
+def safe_mixin(pyClass:object,mixinClass:object):
+   mixin=[{_:getattr(mixinClass,_)} for _ in dir(mixinClass) if not _.startswith("__") and not _.endswith("_") and not _.startswith("_") and  not _.endswith("_")]
+   for liter in mixin:
+      for k,v in liter.items():
+         setattr(pyClass,k,v)
 def MixInClass(pyClass:object, mixInClass:object, makeAncestor:bool=False,ignoreMagicMethod=False) -> None:
    '''
    :param pyClass: the target class\n
