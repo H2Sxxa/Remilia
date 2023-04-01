@@ -117,8 +117,5 @@ class Config:
         if self.setting.regenerate:
             self.regenerate()
         self.sync()
-        @SubcribeEvent
-        def _(_:ConfigSyncEvent):
-            self.sync()
         setattr(self.obj,"__config__",self)
         return obj
