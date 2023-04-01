@@ -5,8 +5,28 @@ from ..LiteData import JsonFile,YamlFile
 Configs=[]
 def get_config(obj):
     return [_ for _ in Configs if _==obj]
+def collect(target):
+    return [{_:getattr(target,_)} for _ in dir(target) if not _.startswith("__") and not _.endswith("_") and not _.startswith("_") and  not _.endswith("_")]
 class ConfigError(Exception):pass
 class ConfigSyncEvent(BaseEvent):pass
+class Temp:
+    def __to_class__(self,target:dict):
+        for k,v in target.items():
+            if isinstance(v,dict):
+                setattr(self,k,Temp().__to_class__(v))
+            else:
+                setattr(self,k,v)
+        return self
+    def __to_dict__(self) -> dict:
+        fin={}
+        for liter in collect(self):
+            for k,v in liter.items():
+                if isinstance(v,Temp):
+                    fin.update({k:v.__to_dict__()})
+                else:
+                    fin.update({k:v})
+        return fin
+    
 def check_to_dict():pass
 class ConfigSetting:
     model:KVFileBase=YamlFile
@@ -30,6 +50,20 @@ class Cate:
         self.obj=obj()
         obj=self.obj
         return self
+    
+    def getObj(self):
+        return self.obj
+    
+    def toDict(self) -> dict:
+        fin={}
+        for liter in collect(self.obj):
+            for k,v in liter.items():
+                if isinstance(v,Cate):
+                    fin.update({k:v.toDict()})
+                else:
+                    fin.update({k:v})
+        return fin
+
     def __getattr__(self, name: str) -> None:
         if name.startswith("__") and name.endswith("__"):
             raise AttributeError(
@@ -38,26 +72,24 @@ class Cate:
         else:
             if hasattr(self.obj,name):
                 return getattr(self.obj,name)
+
 class Config:
     def __init__(self,setting:ConfigSetting) -> None:
         self.setting=setting
-    @staticmethod
-    def collect(target):
-        return [{_:getattr(target,_)} for _ in dir(target) if not _.startswith("__") and not _.endswith("_") and not _.startswith("_") and  not _.endswith("_")]
     def push(self):
-        for siter in self.collect(self.obj):
-            for k,v in siter.items():
+        for liter in collect(self.obj):
+            for k,v in liter.items():
                 if isinstance(v,Cate):
-                    self.setting.model_ins.write(k,self.collect(v.obj))
+                    self.setting.model_ins.write(k,v.toDict())
+                elif isinstance(v,Temp):
+                    self.setting.model_ins.write(k,v.__to_dict__())
                 else:
+                    print(k,v)
                     self.setting.model_ins.write(k,v)
     def get(self):
         for k,v in self.setting.model_ins.FileDict.items():
-            if isinstance(v,list):
-                train=object()
-                for k1,v1 in v.items():
-                    setattr(train,k1,v1)
-                setattr(self.obj,k,train)
+            if isinstance(v,dict):
+                setattr(self.obj,k,Temp().__to_class__(v))
             else:
                 setattr(self.obj,k,v)
     def sync(self):
