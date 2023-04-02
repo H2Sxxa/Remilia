@@ -62,7 +62,7 @@ def gc_Mixin(pyObj,pyProperty,PropertyName):
    '''
    try:
       gc.get_referents(pyObj.__dict__)[0][PropertyName]=pyProperty
-   except Exception as e:
+   except Exception:
       traceback.print_exc()
       raise MixInError("No such inject dict",pyObj,"has no __dict__")
 
