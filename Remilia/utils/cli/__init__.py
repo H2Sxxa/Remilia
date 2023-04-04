@@ -1,5 +1,5 @@
 try:
-    from . import prompts,utils
+    from . import prompts,utils,async_app
     from .utils import default_style
 except:
     pass
@@ -12,5 +12,6 @@ Original License: https://github.com/nonebot/nb-cli/blob/master/LICENSE (MIT LIC
 __all__=[
     "prompts",
     "utils",
-    "default_style"
+    "default_style",
+    "async_app"
 ]
