@@ -7,6 +7,12 @@ class EnumShadow:
 class MixinError:pass
 class Shadow:
     def __init__(self,default=EnumShadow.FOLLOW) -> None:
+        '''
+        use to replace target attr (empty default to follow the father)
+        
+        ---
+        examples
+        '''
         self.default=default
     def fill(self,attr_name,targetclass):
         if self.default != EnumShadow.FOLLOW or not hasattr(targetclass,attr_name):
