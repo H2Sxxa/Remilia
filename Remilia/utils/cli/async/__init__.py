@@ -25,7 +25,7 @@ def MakeAsync():
             style: Optional[Style] = None,
         ) -> Union[DT, RT]:
             app = await self._build_application(no_ansi=no_ansi, style=style or Style([]))
-            result: RT = get_event_loop().run_until_complete(app.run())
+            result: RT = await app.run()
             if result is NoAnswer:
                 if default is None:
                     raise CanceledError("No answer selected!")
