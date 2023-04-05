@@ -1,21 +1,24 @@
 #!/usr/bin/env python
 # coding=utf-8
 
-from time import localtime, strftime
 from setuptools import setup, find_packages
+from requests import get
+from requests import get
+from json import loads
 
-__version__=strftime("%Y.%m.%d.%H.%M.%S", localtime())
+ver=loads(get("https://api.github.com/repos/IAXRetailer/Remilia/releases/latest").text)["tag_name"]
 
 with open("Remilia/__init__.py","r",encoding="utf-8") as pkg:
-    text=pkg.read().replace("#__VERSION__#","__version__=\"%s\""%__version__)
+    text=pkg.read().replace("#__VERSION__#","__version__=\"%s\""%ver)
+    
 with open("Remilia/__init__.py","w",encoding="utf-8") as pkg:
     pkg.write(text)
-    
+
 setup(
     name='Remilia',
-    version=__version__,
+    version=ver,
     description=(
-        'Use python with dignity,here offer some utils'
+        'Use python with dignity,here offer a tookit'
     ),
     long_description_content_type='text/markdown',
     long_description=open('README.md').read(),

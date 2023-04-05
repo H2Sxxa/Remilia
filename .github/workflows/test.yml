@@ -4,8 +4,12 @@
 name: PYPI Publish
 
 on:
-  release:
-    types: [created]
+  push: 
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   deploy:
@@ -26,13 +30,3 @@ jobs:
         pip install setuptools wheel twine requests
         pip install -r requirements.txt
         python lib_tests.py
-        pip install setuptools wheel twine requests
-
-    # pypi
-    - name: Build and publish
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-      run: |
-        python setup.py sdist bdist_wheel
-        twine upload dist/*
