@@ -42,69 +42,95 @@ class ConfigSetting:
         else:
             self.model_ins=self.model(File(self.path))
 class Cate:
-    def __call__(self,obj) -> Temp:
-        self.obj=obj()
-        obj=self.obj
+    def __call__(self,obj) -> "_getObj":
+        self._obj=obj()
+        obj=self._obj
         return self
     
-    def getObj(self):
-        return self.obj
+    def _withObj(self,obj):
+        self.__call__(obj)
+        return self
     
-    def toDict(self) -> dict:
+    def _handle_temp(self,obj) -> "_getObj":
+        self._obj=obj
+        return self
+    
+    def _getObj(self):
+        return self._obj
+    
+    def _modify(self,name,data):
+        setattr(self._getObj(),name,data)
+        return self
+    
+    def _toDict(self) -> dict:
         fin={}
-        for liter in collect_attr(self.obj):
+        for liter in collect_attr(self._obj):
             for k,v in liter.items():
                 if isinstance(v,Cate):
-                    fin.update({k:v.toDict()})
+                    fin.update({k:v._toDict()})
                 else:
                     fin.update({k:v})
         return fin
 
 class Config:
     def __init__(self,setting:ConfigSetting) -> None:
-        self.setting=setting
-    def push(self,target):
+        self._setting=setting
+        
+    def _withObj(self,obj):
+        self.__call__(obj)
+        return self
+    
+    def _push(self,target):
         for liter in collect_attr(target):
             for k,v in liter.items():
                 if isinstance(v,Cate):
-                    self.setting.model_ins.write(k,v.toDict())
+                    self._setting.model_ins.write(k,v._toDict())
                 elif isinstance(v,Temp):
-                    self.setting.model_ins.write(k,v.__to_dict__())
+                    self._setting.model_ins.write(k,v.__to_dict__())
                 else:
-                    self.setting.model_ins.write(k,v)
-    def get(self,target):
-        for k,v in self.setting.model_ins.FileDict.items():
+                    self._setting.model_ins.write(k,v)
+
+    def _get(self,target):
+        for k,v in self._setting.model_ins.FileDict.items():
             if isinstance(v,dict):
-                if hasattr(target,k):
+                if hasattr(target,k) and isinstance(getattr(target,k),Cate):
                     safe_mixin(getattr(target,k),Temp().__to_class__(v))
+                    safe_mixin(getattr(target,k)._getObj(),Temp().__to_class__(v))
+                elif isinstance(getattr(target,k),Cate):
+                    fin=Cate()._handle_temp(Temp().__to_class__(v))
+                    safe_mixin(fin,Temp().__to_class__(v))
+                    setattr(target,k,fin)
+                else:
+                    setattr(target,k,v)
             else:
                 setattr(target,k,v)
-    def sync(self):
+                
+    def _sync(self):
         try:
-            self.get(self.obj)
+            self._get(self._obj)
         except:
             pass
-        self.push(self.obj)
-        self.get(self.obj)
+        self._push(self._obj)
+        self._get(self._obj)
         
-    def regenerate(self):
+    def _regenerate(self):
         try:
-            self.get(self.obj)
+            self._get(self._obj)
         except:
             pass
-        for liter in collect_attr(self.obj):
+        for liter in collect_attr(self._obj):
             for k,v in liter.items():
-                if hasattr(self.rawobj,k):
-                    setattr(self.rawobj,k,v)
-        self.setting.model_ins.File.write("w","{}")
-        self.push(self.rawobj)
+                if hasattr(self._rawobj,k):
+                    setattr(self._rawobj,k,v)
+        self._setting.model_ins.File.write("w","{}")
+        self._push(self._rawobj)
         
     def __call__(self,obj):
-        self.rawobj=obj()
+        self._rawobj=obj()
         obj=obj()
-        self.obj=obj
-        if self.setting.regenerate:
-            self.regenerate()
-        self.sync()
-        setattr(self.obj,"__config__",self)
-        return obj
+        self._obj=obj
+        if self._setting.regenerate:
+            self._regenerate()
+        self._sync()
+        setattr(self._obj,"__config__",self)
+        return self._obj
