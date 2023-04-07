@@ -2,19 +2,19 @@ from abc import ABC,abstractmethod
 
 from ..lite.LiteResource import Directory, PathError
 
-from ..lite.LiteResource import File as FileType
+from ..lite.LiteResource import File
 class CommonFileBase(ABC):
     def __init__(
         self,
-        File:FileType,
+        _file:File,
         noneText:str=""
         ) -> None:
         self.noneText=noneText
         
-        if isinstance(File,FileType):
-            File=FileType(File)
+        if isinstance(File,File):
+            _file=File(File)
         
-        self.File=File
+        self.File=_file
         if not File.isexist or File.text == "":
             File.write("w",noneText)
     
