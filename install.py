@@ -8,13 +8,7 @@ from requests import get
 from json import loads
 from sys import argv
 
-ver=loads(get("https://api.github.com/repos/IAXRetailer/Remilia/releases").text)[0]["tag_name"]
-
-with open("Remilia/__init__.py","r",encoding="utf-8") as pkg:
-    text=pkg.read().replace("#__VERSION__#","__version__=\"%s\""%ver)
-    
-with open("Remilia/__init__.py","w",encoding="utf-8") as pkg:
-    pkg.write(text)
+ver="%sdev0"% strftime("%Y.%m.%d.", localtime())
 
 setup(
     name='Remilia',
