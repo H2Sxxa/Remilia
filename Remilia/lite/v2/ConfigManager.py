@@ -78,6 +78,8 @@ class Cate:
             for k,v in liter.items():
                 if isinstance(v,Cate):
                     fin.update({k:v._toDict()})
+                elif isinstance(v,Temp):
+                    fin.update({k:v.__to_dict__()})
                 else:
                     fin.update({k:v})
         return fin
@@ -98,8 +100,9 @@ class Config:
                 elif isinstance(v,Temp):
                     self._setting.model_ins.write(k,v.__to_dict__())
                 else:
+                    #print(v,type(v))
                     self._setting.model_ins.write(k,v)
-
+        return self
     def _get(self,target):
         for k,v in self._setting.model_ins.FileDict.items():
             if isinstance(v,dict):
@@ -114,7 +117,7 @@ class Config:
                     setattr(target,k,v)
             else:
                 setattr(target,k,v)
-                
+        return self
     def _sync(self):
         try:
             self._get(self._obj)
@@ -122,7 +125,8 @@ class Config:
             pass
         self._push(self._obj)
         self._get(self._obj)
-        
+        return self
+    
     def _regenerate(self):
         try:
             self._get(self._obj)
@@ -134,7 +138,15 @@ class Config:
                     setattr(self._rawobj,k,v)
         self._setting.model_ins.File.write("w","{}")
         self._push(self._rawobj)
-        
+        return self
+    
+    def _modify(self,name,obj):
+        setattr(self._obj,name,obj)
+        return self
+    
+    def _modify_push(self,name,obj):
+        return self._modify(name,obj)._push(self._obj)._get(self._obj)
+    
     def __call__(self,obj):
         self._rawobj=obj()
         obj=obj()
