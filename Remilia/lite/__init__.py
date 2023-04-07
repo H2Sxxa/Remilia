@@ -9,6 +9,7 @@ from . import (
     LiteI18n,
     LiteThread,
     v2,
+    utils,
     )
 
 __all__=[
@@ -22,6 +23,7 @@ __all__=[
     "LiteEvent",
     "LiteData",
     "LiteI18n",
+    "utils",
     ]
 
 #@Author H2Sxxa
