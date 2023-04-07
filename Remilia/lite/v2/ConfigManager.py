@@ -41,6 +41,16 @@ class ConfigSetting:
             raise ConfigError("can't go on without a path")
         else:
             self.model_ins=self.model(File(self.path))
+            
+    def replace_ins(self,path:str):
+        self.path=path
+        self.model_ins=self.model(File(self.path))
+        return self
+    
+    def replace_model(self,model:KVFileBase):
+        self.model=model
+        return self
+    
 class Cate:
     def __call__(self,obj) -> "_getObj":
         self._obj=obj()
