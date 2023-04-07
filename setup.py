@@ -6,7 +6,8 @@ from requests import get
 from requests import get
 from json import loads
 
-ver=loads(get("https://api.github.com/repos/IAXRetailer/Remilia/releases/latest").text)["tag_name"]
+
+ver=loads(get("https://api.github.com/repos/IAXRetailer/Remilia/releases").text)[0]["tag_name"]
 
 with open("Remilia/__init__.py","r",encoding="utf-8") as pkg:
     text=pkg.read().replace("#__VERSION__#","__version__=\"%s\""%ver)
