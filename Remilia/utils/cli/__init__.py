@@ -1,5 +1,5 @@
 try:
-    from . import prompts,utils,async_app
+    from noneprompt import prompts,utils
     from .utils import default_style
 except:
     pass
@@ -13,5 +13,4 @@ __all__=[
     "prompts",
     "utils",
     "default_style",
-    "async_app"
 ]
