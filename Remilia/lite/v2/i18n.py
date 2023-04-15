@@ -20,7 +20,7 @@ class I18nFile(File):
         super().__init__(path, encoding)
         self.parser=parser
         
-    def tomap(self) -> List[str,Any]:
+    def tomap(self) -> List[dict]:
         for i in self.parser.todict(self.text):
             for k,v in i.items():
                 pass
