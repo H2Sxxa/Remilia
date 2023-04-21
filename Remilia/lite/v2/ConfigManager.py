@@ -152,6 +152,7 @@ class Config:
                     res.update({k:v._toDict()})
                 else:
                     res.update({k:v})
+        return res
     
     def _modify_push(self,name,obj):
         return self._modify(name,obj)._push(self._obj)._get(self._obj)
