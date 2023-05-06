@@ -18,8 +18,7 @@ def __REQUIREMENTS__():
     '''
 ## if you want to use some class in our lib,you must install the lib below
 ### utils/cli
-- #### click >= 8.0
-- #### prompt_toolkit >= 3.0.31
+- #### noneprompt
 
 ### utils/net/pixiv
 - #### pixivpy_async >= 1.2.14

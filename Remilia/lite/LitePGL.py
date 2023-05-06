@@ -8,7 +8,8 @@ class PluginManager:
     def __init__(self) -> None:
         self.plugins=[]
         
-    def load_plugin(self,path:Path):pass
+    def load_plugin(self,path:Path):
+        self.__load(path)
     
     
     

@@ -144,6 +144,16 @@ class Config:
         setattr(self._obj,name,obj)
         return self
     
+    def _get_dict(self):
+        res={}
+        for liter in collect_attr(self._obj):
+            for k,v in liter.items():
+                if isinstance(v,Cate):
+                    res.update({k:v._toDict()})
+                else:
+                    res.update({k:v})
+        return res
+    
     def _modify_push(self,name,obj):
         return self._modify(name,obj)._push(self._obj)._get(self._obj)
     
