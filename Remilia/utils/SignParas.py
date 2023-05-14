@@ -26,26 +26,30 @@ class ParaFilter:
                 return para
             
     def index_put(self,index,value):
-        self.kwargs.update({self.signargs[index].name:value})
+        self.update_kwg({self.signargs[index].name:value})
     
     def check_put(self,atype,value):
-        self.kwargs.update(*[{_.name:value} for _ in self.check_get(atype)])
+        self.update_kwg(*[{_.name:value} for _ in self.check_get(atype)])
 
     def check_put_anno(self,atype):
-        self.kwargs.update(*[{_.name:_.annotation} for _ in self.check_get(atype)])
+        self.update_kwg(*[{_.name:_.annotation} for _ in self.check_get(atype)])
         
     def check_put_handle(self,atype,func):
-        self.kwargs.update(*[{_.name:func(_)} for _ in self.check_get(atype)])
+        self.update_kwg(*[{_.name:func(_)} for _ in self.check_get(atype)])
 
     def check_get(self,atype):
         return [_ for _ in self.signargs if self.__check(atype,_.annotation)]
     
     def load_default(self):
-        self.kwargs.update(*[{_.name:_.default} for _ in self.signargs if _.default != _empty])
+        self.update_kwg(*[{_.name:_.default} for _ in self.signargs if _.default != _empty])
         
     def fill_none(self):
-        self.kwargs.update(*[{_.name:None} for _ in self.signargs if _.default == _empty and _.name not in self.kwargs])
+            
+        self.update_kwg(*[{_.name:None} for _ in self.signargs if _.default == _empty and _.name not in self.kwargs])
     
+    def update_kwg(self,*dicts):
+        for d in dicts:
+            self.kwargs.update(d)
     
     def __enter__(self):
         self.load_default()

@@ -16,20 +16,20 @@ class DecorationBase:
     
     
 class ParaHooker:
-    def __init__(self,bfhooker=lambda:None,afhooker=lambda para,result,*_,**__:result) -> None:
-        self.bf=bfhooker
-        self.af=afhooker
-        self.para=None
+    def __init__(self,bfhooker=lambda *_,**__:None,afhooker=lambda para,result,*_,**__:result) -> None:
+        self._bf=bfhooker
+        self._af=afhooker
+        self._para=None
     def _setpara(self,x):
-        self.para=x
-    def __getattr__(self,name,*args,**kwargs):
-        try:
-            return getattr(self.para,name,*args,**kwargs)
-        except:
-            return getattr(self,name,*args,**kwargs)
-
+        self._para=x
+        
+    #BUG Can't work
+    def __getattr__(self,name):
+        self.bf(self.para)
+        result=getattr(self._para,name)
+        return self.af(self._para,result)
 class Hooker(DecorationBase):
-    def __init__(self,bfhooker=lambda:None,afhooker=lambda obj,result,*_,**__:result,parahooker:List[Pair]=[]) -> None:
+    def __init__(self,bfhooker=lambda *_,**__:None,afhooker=lambda obj,result,*_,**__:result,parahooker:List[Pair]=[]) -> None:
         self.bf=bfhooker
         self.af=afhooker
         self.ph=parahooker
@@ -40,10 +40,9 @@ class Hooker(DecorationBase):
     def warpper(self):
         filter=ParaFilter(self.obj)
         filter.load_default()
+        filter.fill_none()
         for pair in self.ph:
             filter.index_put(pair.attr_A,pair.attr_B)
-        filter.fill_none()
-        
         def tmp(*args,**kwargs):
             self.bf(self.obj,*args,**kwargs)
             for arg,index in zip(args,range(0,len(args))):
