@@ -3,8 +3,9 @@ from .utils import collect_attr
 
 class EnumShadow:
     class FOLLOW:pass
-    
 class MixinError:pass
+class DecorationBase:pass
+
 class Shadow:
     def __init__(self,default=EnumShadow.FOLLOW) -> None:
         '''
@@ -20,7 +21,14 @@ class Shadow:
     def gc_fill(self,attr_name,targetdict:dict):
         if self.default != EnumShadow.FOLLOW or attr_name not in targetdict.keys():
             targetdict[attr_name]=self.default
-class NameTransform:
+
+class Wrapper:
+    def __init__(self,*decorations:DecorationBase) -> None:
+        self.decoration=decorations
+
+
+
+class NameTransform(DecorationBase):
     def __init__(self,real_name) -> None:
         '''
         use to inject self into attr 'real_name'
