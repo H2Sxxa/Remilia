@@ -2,11 +2,11 @@ import gc
 from types import ModuleType
 from typing import Any
 from .utils import collect_attr
-
+from .mixin_decorations import *
+from . import mixin_decorations
 class EnumShadow:
     class FOLLOW:pass
 class MixinError:pass
-class DecorationBase:pass
 
 class Shadow:
     def __init__(self,default=EnumShadow.FOLLOW) -> None:
@@ -23,39 +23,11 @@ class Shadow:
     def gc_fill(self,attr_name,targetdict:dict):
         if self.default != EnumShadow.FOLLOW or attr_name not in targetdict.keys():
             targetdict[attr_name]=self.default
-
-class Wrapper:
-    def __init__(self,*decorations:DecorationBase) -> None:
-        self.decoration=decorations
-
-
-
-class NameTransform(DecorationBase):
-    def __init__(self,real_name) -> None:
-        '''
-        use to inject self into attr 'real_name'
-        
-        ---
-        examples:
-        
-        ```python
-        x=NameTransform("__nameless_var__").withObj(8)
-        
-        @NameTransform("__nameless_method__")
-        def x(self):pass
-        ```
-        '''
-        self.real_name=real_name
-    def __call__(self,obj):
-        self.obj=obj
-        return self
-    def withObj(self,obj):
-        self.obj=obj
-        return self
+            
 
 class ModuleMixin:
-    def __init__(self,t_module:ModuleType) -> None:
-        self.module=t_module
+    def __init__(self,target_module:ModuleType) -> None:
+        self.module=target_module
     def __call__(self,canbeinject) -> Any:
         self.module.__dict__.update({canbeinject.__name__:canbeinject})
 
@@ -113,9 +85,12 @@ class Mixin:
             gc_dict={}
         for liter in mixin_map:
             for k,v in liter.items():
-                if isinstance(v,NameTransform):
-                    k=v.real_name
-                    v=v.obj
+                while isinstance(v,DecorationBase):
+                    pair=v.warp(Pair(k,v))
+                    
+                    k=pair.attr_A
+                    v=pair.attr_B
+                    
                 if isinstance(v,Shadow):
                     if self.gc_mixin:
                         v.gc_fill(k,gc_dict)

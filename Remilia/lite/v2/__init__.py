@@ -1,13 +1,17 @@
 from . import (
-    ClassMixin,
     ConfigManager,
     i18n,
     DictoryTreeBuilder,
+    mixin,
+    mixin_decorations,
 )
 
+ClassMixin=mixin
+
 __all__=[
-    "ClassMixin",
+    "mixin",
     "i18n",
     "ConfigManager",
     "DictoryTreeBuilder",
+    "mixin_decorations",
 ]

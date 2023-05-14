@@ -5,7 +5,6 @@ from typing import List
 
 class ParaFilter:
     def __init__(self,target:FunctionType) -> None:
-        self.args:List=[]
         self.signargs:List[Parameter]=[]
         self.kwargs={}
         self.target=target
@@ -17,6 +16,17 @@ class ParaFilter:
             
     def __check(self,raw,sub):
         return issubclass(sub,raw)
+    
+    def get_index(self,index):
+        return self.signargs[index]
+    
+    def get_name(self,name) -> Parameter:
+        for para in self.signargs:
+            if para.name == name:
+                return para
+            
+    def index_put(self,index,value):
+        self.kwargs.update({self.signargs[index].name:value})
     
     def check_put(self,atype,value):
         self.kwargs.update(*[{_.name:value} for _ in self.check_get(atype)])
@@ -35,8 +45,10 @@ class ParaFilter:
         
     def fill_none(self):
         self.kwargs.update(*[{_.name:None} for _ in self.signargs if _.default == _empty and _.name not in self.kwargs])
-        
+    
+    
     def __enter__(self):
+        self.load_default()
         return self
     
     def __exit__(self,*args,**kwargs):

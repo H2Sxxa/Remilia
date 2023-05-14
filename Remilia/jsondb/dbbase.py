@@ -1,4 +1,4 @@
-from ..base.types import VarBuilder
+from ..base.rtypes import VarBuilder
 class DBVar:
     def initlize(self,db,rootTable):
         self.db=db
