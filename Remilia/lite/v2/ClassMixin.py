@@ -1,4 +1,6 @@
 import gc
+from types import ModuleType
+from typing import Any
 from .utils import collect_attr
 
 class EnumShadow:
@@ -50,7 +52,13 @@ class NameTransform(DecorationBase):
     def withObj(self,obj):
         self.obj=obj
         return self
-    
+
+class ModuleMixin:
+    def __init__(self,t_module:ModuleType) -> None:
+        self.module=t_module
+    def __call__(self,canbeinject) -> Any:
+        self.module.__dict__.update({canbeinject.__name__:canbeinject})
+
 #TODO Finish it
 class Mixin:
     makeAncestor:bool=False
