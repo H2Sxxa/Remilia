@@ -1,9 +1,13 @@
 from types import MethodType
-from typing import Any, List
-from ....base.rtypes import Pair
-from ....utils.SignParas import ParaFilter
-from ....lite.LiteMixin import gc_Mixin
+from typing import List
+from ..base.rtypes import Pair
+from ..utils.SignParas import ParaFilter
+from .omixin import gc_Mixin
+from . import omixin
 from abc import abstractmethod
+
+__all__=["omixin"]
+
 class DecorationBase:
     def __call__(self,obj):
         self.obj=obj
@@ -127,6 +131,7 @@ class NameTransform(DecorationBase):
     def __init__(self,real_name) -> None:
         '''
         use to inject self into attr 'real_name'
+        PS:Usally in the outside of all decorations
         
         ---
         examples:

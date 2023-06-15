@@ -4,6 +4,9 @@ from typing import Any
 from .utils import collect_attr
 from .mixin_decorations import *
 from . import mixin_decorations
+
+__all__=["mixin_decorations"]
+
 class EnumShadow:
     class FOLLOW:pass
 class MixinError:pass

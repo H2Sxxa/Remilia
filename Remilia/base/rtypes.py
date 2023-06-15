@@ -1,3 +1,6 @@
+from typing import TypeVar
+
+
 class VarBuilder:
     def new(self,parents:tuple,custom_warp=None,init_args:tuple=(),init_kwargs:dict={}):
         return self.new_cls(parents=parents,custom_warp=custom_warp)(*init_args,**init_kwargs)
@@ -15,6 +18,23 @@ class VarBuilder:
         def inner(*arg,**args):
             return warpin(*arg,**args)
         return inner
+    
+import json,re
+def typedet(string:str,strict=True) -> any:
+    if not re.match(r"[\u4E00-\u9FA5A-Za-z]",string) and re.match(r"[0-9]",string) and not re.match(r"[`~!@#$%^&*()_\-+=<>?:\"{}|,\/;'\\[\]·~！@#￥%……&*（）——\-+={}|《》？：“”【】、；‘'，。、]",string):
+        if "." in string:
+            try:
+                return float(string)
+            except:
+                pass
+        else:
+            return int(string)
+    try:
+        res=json.loads(string,strict=strict)
+        return res
+    except:
+        pass
+    return string
 
 class Pair:
     def __init__(self,a,b) -> None:
@@ -38,3 +58,7 @@ class Pair:
     @staticmethod
     def fromkv(k,v):
         return Pair(k,v)
+    
+    
+RT=TypeVar("RT")
+T=TypeVar("T")
