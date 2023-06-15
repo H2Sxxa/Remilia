@@ -1,8 +1,10 @@
 import gc
 from types import ModuleType
 from typing import Any
+
+from .base.rtypes import Pair
 from .utils import collect_attr
-from .mixin_decorations import *
+from .mixin_decorations import DecorationBase
 from . import mixin_decorations
 
 __all__=["mixin_decorations"]
