@@ -1,7 +1,7 @@
 from functools import partial
 from colorama import Fore, Back, Style, Cursor
 from colorama import init as initcolor
-from typing import Any, Dict, Optional
+from typing import Dict, Optional,TYPE_CHECKING
 from typing_extensions import Self
 from pydantic import BaseModel
 from sys import stdout
@@ -9,6 +9,12 @@ from time import strftime,localtime
 from .base.rtypes import RT,T
 from platform import system
 import inspect
+
+if TYPE_CHECKING:
+    class _CallMethod:
+        def __call__(self, *args: str) -> None:
+            ...
+
 
 try:
     if system() == "Windows":
@@ -63,11 +69,6 @@ class Log:
             )
         __all__=[location,name,text,time]
         return eval(ruler.explain)
-    
-    def sub(self) -> str:pass
-    def __str__(self) -> str:
-        return super().__str__()
-
 
 #TODO WRITE IT
 class LogCat:
@@ -104,7 +105,7 @@ class Logger:
         self.handle_out(Log(name,log,level).color(self.get_ruler(name),location))
         
     
-    def __getattr__(self,name) -> None:
+    def __getattr__(self,name) -> "_CallMethod":
         if name.startswith("__") and name.endswith("__"):
             raise AttributeError(
                 f"'{self.__class__.__name__}' object has no attribute '{name}'"
