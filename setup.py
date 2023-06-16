@@ -4,7 +4,6 @@
 from time import localtime, strftime
 from setuptools import setup, find_packages
 from requests import get
-from requests import get
 from json import loads
 from sys import argv
 
