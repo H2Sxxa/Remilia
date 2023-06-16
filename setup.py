@@ -44,6 +44,7 @@ setup(
     install_requires = [
         "colorama",
         "pyyaml",
+        "pydantic",
         "noneprompt",
         ]
 )
