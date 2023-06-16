@@ -41,7 +41,7 @@ class Log:
     def __init__(self,name:str,logs:tuple=(),level:int=5) -> None:
         super().__init__()
         self.level=level
-        self.logs=logs
+        self.logs=map(str,logs)
         self.name=name.upper()
         
     def color(self,ruler:Ruler,location:str) -> str:
@@ -88,6 +88,11 @@ class Logger:
 
         global instance
         instance=self
+    
+    def ex_ruler(self,model:str,**colors:Dict[str,tuple]) -> Self:
+        for n,c in colors.items():
+            self.to_ruler(n,self.get_ruler(n).exgenerate(model,*c))
+        return self
     
     def to_ruler(self,name:str,level:int) -> Self:
         self.ruler_map.update({name.upper():level})
