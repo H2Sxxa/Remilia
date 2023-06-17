@@ -26,7 +26,7 @@ jobs:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
       run: |
-        python -m pip install --upgrade pip
-        pip install .[publish]
-        python test/testlib.py
+        pdm install
+        pdm add --group publish
+        pdm run test/testlib.py
         pdm build && twine upload dist/*
