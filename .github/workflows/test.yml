@@ -28,4 +28,4 @@ jobs:
       run: |
         pdm install
         pdm add --group all
-        python test/testlib.py
+        pdm run test/testlib.py
