@@ -26,6 +26,6 @@ jobs:
     
     - name: Setup & Test Lib
       run: |
-        python -m pip install --upgrade pip
-        pip install .[all]
+        pdm install
+        pdm add --group all
         python test/testlib.py

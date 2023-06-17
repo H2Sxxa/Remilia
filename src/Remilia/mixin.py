@@ -1,6 +1,7 @@
 import gc
 from types import ModuleType
 from typing import Any
+from enum import Enum
 
 from .base.rtypes import Pair
 from .mixin_decorations.omixin import collect_attr
@@ -9,9 +10,10 @@ from . import mixin_decorations
 
 __all__=["mixin_decorations"]
 
-class EnumShadow:
-    class FOLLOW:pass
-class MixinError:pass
+class EnumShadow(Enum):
+    FOLLOW="FOLLOW"
+    
+class MixinError(Exception):pass
 
 class Shadow:
     def __init__(self,default=EnumShadow.FOLLOW) -> None:

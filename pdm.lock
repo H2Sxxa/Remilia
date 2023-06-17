@@ -32,7 +32,7 @@ summary = "Backported and Experimental Type Hints for Python 3.7+"
 lock_version = "4.2"
 cross_platform = true
 groups = ["default"]
-content_hash = "sha256:26814fe0a906f2b6c1ce943a40524f38facb5a1c10890a638c001df2c7100992"
+content_hash = "sha256:6fd99a8b6a5f3831a5377b2de79670bb982c9b0706345762e4d8a4789764ac77"
 
 [metadata.files]
 "colorama 0.4.6" = [

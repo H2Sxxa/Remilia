@@ -1,4 +1,6 @@
 from . import (
+    log,
+    res,
     utils,
     base,
     mixin,
@@ -6,6 +8,8 @@ from . import (
 )
 
 __all__=[
+    "log",
+    "res",
     "utils",
     "base",
     "mixin",
