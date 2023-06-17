@@ -1,0 +1,45 @@
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[project]
+name = "Remilia"
+description = "Use python with next generation api"
+authors = [{name = "H2Sxxa", email = "H2Sxxa0w0@gmail.com"}]
+license = { file = "LICENSE" }
+readme = "README.md"
+requires-python = ">=3.8"
+dynamic = ["version"]
+classifiers=[
+'License :: OSI Approved :: MIT License',
+
+'Programming Language :: Python :: 3.6',
+'Programming Language :: Python :: 3.7',
+'Programming Language :: Python :: 3.8',
+'Programming Language :: Python :: 3.9',
+'Programming Language :: Python :: 3.10',
+'Programming Language :: Python :: 3.11',
+]
+dependencies = ["colorama","pyyaml","pydantic","typing_extensions"]
+
+[project.urls]
+Homepage = "https://pypi.org/project/Remilia/"
+Repository = "https://github.com/H2Sxxa/Remilia"
+Issues = "https://github.com/H2Sxxa/Remilia/issues"
+Discussions = "https://github.com/H2Sxxa/Remilia/discussions"
+
+
+[tool.pdm.version]
+source = "scm"
+write_to = "Remilia/__version__.py"
+write_template = "__version__ = '{}'"
+
+[tool.pdm.build]
+excludes = ["./**/.git"]
+package-dir = "src"
+includes = ["src/Remilia"]
+source-includes = ["LICENSE", "README.md"]
+
+[project.optional-dependencies]
+tui = ["noneprompt"]
+all = ["noneprompt","pixivpy_async"]

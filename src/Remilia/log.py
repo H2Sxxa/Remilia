@@ -4,7 +4,6 @@ from colorama import init as initcolor
 from typing import Dict, Optional,TYPE_CHECKING
 from typing_extensions import Self
 from pydantic import BaseModel
-from sys import stdout
 from time import strftime,localtime
 from .base.rtypes import RT,T
 from platform import system
@@ -29,7 +28,6 @@ class Ruler(BaseModel):
     self -> Type(Log)
     '''
     level:int=5
-    colors:dict={}
     excolor:str="fore.LIGHTGREEN_EX+'[ '+name+' '+time+' '+location+'] '+style.RESET_ALL+text"
     explain:str="'[ '+name+' '+time+' '+location+'] '+text"
     timeformat:str="%H:%M:%S"
@@ -37,44 +35,52 @@ class Ruler(BaseModel):
         self.explain=model % tuple(["" for _ in color])
         self.excolor=model % color
         return self
+
 class Log:
-    def __init__(self,name:str,logs:tuple=(),level:int=5) -> None:
+    def __init__(self,name:str,location:str,logs:tuple=(),ruler:Ruler=Ruler()) -> None:
         super().__init__()
-        self.level=level
+        self.ruler=ruler
+        self.location=location
         self.logs=map(str,logs)
         self.name=name.upper()
-        
-    def color(self,ruler:Ruler,location:str) -> str:
+    
+    @property
+    def color(self) -> str:
         #colorama stuff
         fore=Fore
         style=Style
         cursor=Cursor
         back=Back
         #base
+        location=self.location
+        ruler=self.ruler
         name=self.name
         text=" ".join(self.logs)
         time=strftime(
-            ruler.timeformat,
+            self.ruler.timeformat,
             localtime()
             )
-        __all__=[location,name,text,time,fore,style,cursor,back]
-        return eval(ruler.excolor)
+        __all__=[ruler,location,name,text,time,fore,style,cursor,back]
+        return eval(self.ruler.excolor)
     
-    def plain(self,ruler:Ruler,location:str) -> str:
+    @property
+    def plain(self) -> str:
+        location=self.location
+        ruler=self.ruler
         name=self.name
         text=" ".join(self.logs)
         time=strftime(
-            ruler.timeformat,
+            self.ruler.timeformat,
             localtime()
             )
-        __all__=[location,name,text,time]
-        return eval(ruler.explain)
+        __all__=[ruler,location,name,text,time]
+        return eval(self.ruler.explain)
 
 #TODO WRITE IT
 class LogCat:
     def __init__(self) -> None:
         pass
-        
+    def record(self,*log:Log):pass
 class Logger:
     def __init__(self,logcat:LogCat=LogCat(),ruler_map:Optional[Dict[str,Ruler]]={},model:str="'%s[ '+name+' '+time+' '+location+'] %s'+text") -> None:
         self.ruler_map={
@@ -84,10 +90,20 @@ class Logger:
             "ERROR":Ruler(level=7).exgenerate(model,Fore.LIGHTRED_EX,Style.RESET_ALL),
         }
         self.ruler_map.update(ruler_map)
+        self.logcat=logcat
         self.handle_out=print
-
+        self.vlevel=5
+        self.wlevel=0
         global instance
         instance=self
+    
+    def set_vlevel(self,vlevel:int) -> Self:
+        self.vlevel=vlevel
+        return self
+    
+    def set_wlevel(self,wlevel:int) -> Self:
+        self.wlevel=wlevel
+        return self
     
     def ex_ruler(self,model:str,**colors:Dict[str,tuple]) -> Self:
         for n,c in colors.items():
@@ -103,12 +119,13 @@ class Logger:
             return self.ruler_map[name.upper()]
         except:
             return Ruler()
+        
     def print(self,name:str,*log:Log) -> None:
-        location=inspect.getmodule(inspect.stack()[1][0]).__name__
-        level= 5 if name.upper() not in self.ruler_map.keys() else self.ruler_map[name.upper()]
-        
-        self.handle_out(Log(name,log,level).color(self.get_ruler(name),location))
-        
+        clog=Log(name,inspect.getmodule(inspect.stack()[1][0]).__name__,log,self.get_ruler(name))
+        if self.vlevel >= clog.ruler.level:
+            self.handle_out(clog.color)
+        if self.wlevel >= clog.ruler.level:
+            self.logcat.record(clog.plain)
     
     def __getattr__(self,name) -> "_CallMethod":
         if name.startswith("__") and name.endswith("__"):

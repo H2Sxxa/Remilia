@@ -1,11 +1,11 @@
 <div align=center>
-  <img src="https://raw.githubusercontent.com/IAXRetailer/Remilia/main/background.png"  alt="[BG](https://raw.githubusercontent.com/IAXRetailer/Remilia/main/background.png)"/>
+  <img src="https://raw.githubusercontent.com/H2Sxxa/Remilia/main/background.png"  alt="[BG](https://raw.githubusercontent.com/H2Sxxa/Remilia/main/background.png)"/>
   <h1 align="center">Remilia</h1> 
 </div>
 <div align=center>
   <img src="https://img.shields.io/badge/python-3.8+-blue" alt="python">
-  <img src="https://img.shields.io/github/languages/code-size/IAXRetailer/Remilia" alt="size">
-  <img src="https://img.shields.io/github/license/IAXRetailer/Remilia" alt="license">
+  <img src="https://img.shields.io/github/languages/code-size/H2Sxxa/Remilia" alt="size">
+  <img src="https://img.shields.io/github/license/H2Sxxa/Remilia" alt="license">
 </div>
 
 # Install
@@ -22,13 +22,8 @@ pip install Remilia
 
 ## Q: AttributeError: module 'Remilia' has no attribute '...'
 
-use the function below or see it in Remilia.__init__ to install the required lib,
+See the pyproject.toml ,there offer some other optional dependiences
 
-if it doesn't work,please consider a issue
-
-```python
-Remilia.__REQUIREMENTS__()
-```
 # Learn more in our WIKI
 
-## https://github.com/IAXRetailer/Remilia/wiki
+## https://github.com/H2Sxxa/Remilia/wiki

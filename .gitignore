@@ -128,6 +128,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-test.py
+**/test.py
 .vscode
-shadowsocks2-win64.exe
+.pdm-build
+.pdm-python
