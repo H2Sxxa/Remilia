@@ -13,7 +13,7 @@ on:
 
 jobs:
   deploy:
-    name: Test Lib & Publish
+    name: Test
     runs-on: ubuntu-latest
 
     steps:
@@ -24,8 +24,8 @@ jobs:
       with:
         python-version: '3.10'
     
-    - name: Setup & Publish Lib
+    - name: Setup & Test Lib
       run: |
         python -m pip install --upgrade pip
-        pip install .
+        pip install .[all]
         python test/testlib.py
