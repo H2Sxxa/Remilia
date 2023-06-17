@@ -11,7 +11,6 @@ jobs:
   pypi-publish:
     name: Test Lib & Publish
     runs-on: ubuntu-latest
-    environment: PYPI
     permissions:
       id-token: write
     steps:
@@ -27,4 +26,4 @@ jobs:
         python -m pip install --upgrade pip
         pip install .[all]
         python test/testlib.py
-        pdm publish -u ${{ secrets.PDM_PUBLISH_USERNAME }} -P ${{ secrets.PDM_PUBLISH_PASSWORD }}
+        pdm publish
