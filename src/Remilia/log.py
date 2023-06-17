@@ -3,9 +3,8 @@ from colorama import Fore, Back, Style, Cursor
 from colorama import init as initcolor
 from typing import Dict, Optional,TYPE_CHECKING
 from typing_extensions import Self
-from pydantic import BaseModel
 from time import strftime,localtime
-from .base.rtypes import RT,T
+from .base.models import Ruler
 from platform import system
 import inspect
 
@@ -22,19 +21,6 @@ try:
         initcolor(wrap=False)
 except:
     pass
-
-class Ruler(BaseModel):
-    '''
-    self -> Type(Log)
-    '''
-    level:int=5
-    excolor:str="fore.LIGHTGREEN_EX+'[ '+name+' '+time+' '+location+'] '+style.RESET_ALL+text"
-    explain:str="'[ '+name+' '+time+' '+location+'] '+text"
-    timeformat:str="%H:%M:%S"
-    def exgenerate(self,model:str,*color:str) -> Self:
-        self.explain=model % tuple(["" for _ in color])
-        self.excolor=model % color
-        return self
 
 class Log:
     def __init__(self,name:str,location:str,logs:tuple=(),ruler:Ruler=Ruler()) -> None:

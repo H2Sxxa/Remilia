@@ -13,7 +13,7 @@ __all__=["mixin_decorations"]
 class EnumShadow(Enum):
     FOLLOW="FOLLOW"
     
-class MixinError(Exception):pass
+
 
 class Shadow:
     def __init__(self,default=EnumShadow.FOLLOW) -> None:

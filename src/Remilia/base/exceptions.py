@@ -1,0 +1,1 @@
+class MixinError(Exception):pass

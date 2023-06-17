@@ -6,4 +6,5 @@ Logger.info("hello world")
 
 from Remilia.utils.cli import noneprompt
 
-noneprompt.InputPrompt("")
+
+__all__=[noneprompt]
