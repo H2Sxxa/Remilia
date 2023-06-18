@@ -1,9 +1,12 @@
 from functools import partial
+from pathlib import Path
 from colorama import Fore, Back, Style, Cursor
 from colorama import init as initcolor
-from typing import Dict, Optional,TYPE_CHECKING
+from typing import Callable, Dict, List, Optional,TYPE_CHECKING, Union
 from typing_extensions import Self
 from time import strftime,localtime
+
+from .res import rFile, rPath
 from .base.models import Ruler
 from platform import system
 import inspect
@@ -62,11 +65,24 @@ class Log:
         __all__=[ruler,location,name,text,time]
         return eval(self.ruler.explain)
 
-#TODO WRITE IT
+
 class LogCat:
+    all_logs:List[Log]
+    all_subs:List[Union[rFile,rPath,Path,str]]
     def __init__(self) -> None:
-        pass
-    def record(self,*log:Log):pass
+        self.all_logs=[]
+    def record(self,*log:Log) -> Self:
+        self.all_logs.extend(log)
+        return self
+    def export(self,path:Union[rFile,rPath,Path,str],filter:Callable[[Log],bool],write_mode:str="w") -> Self:
+        rflog=rFile(path) if not isinstance(path,rFile) else path
+        rflog.write(data='\n'.join([log.plain for log in self.all_logs if filter(log)]),mode=write_mode)
+        return self
+    def subscribe(self,*paths:Union[rFile,rPath,Path,str]) -> Self:
+        subs=map(lambda path: rFile(path) if not isinstance(path,rFile) else paths,paths)
+        self.all_subs.extend(subs)
+        return self
+    
 class Logger:
     def __init__(self,logcat:LogCat=LogCat(),ruler_map:Optional[Dict[str,Ruler]]={},model:str="'%s[ '+name+' '+time+' '+location+'] %s'+text") -> None:
         self.ruler_map={
@@ -111,7 +127,7 @@ class Logger:
         if self.vlevel >= clog.ruler.level:
             self.handle_out(clog.color)
         if self.wlevel >= clog.ruler.level:
-            self.logcat.record(clog.plain)
+            self.logcat.record(clog)
     
     def __getattr__(self,name) -> "_CallMethod":
         if name.startswith("__") and name.endswith("__"):
