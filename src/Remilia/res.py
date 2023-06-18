@@ -33,13 +33,29 @@ class rFile(rPath):
             raise TypeError("'%s' is not a file" % self.absolute())
         super().__init__(*args, **kwargs)
         self.encoding='utf-8'
-
+        
+    def read_text(self, errors: Union[str,None]=None) -> str:
+        return super().read_text(self.encoding, errors)
+    
+    def write(self,data:T="",mode:str="w",*args,**kwargs) -> None:
+        with self.open(mode=mode,encoding=self.encoding,*args,**kwargs) as f:
+            return f.write(data)
+    def read(self,mode:str="r",*args,**kwargs) -> Union[str,bytes]:
+        with self.open(mode=mode,encoding=self.encoding,*args,**kwargs) as f:
+            return f.read()
+    @property
+    def bytes(self):
+        return self.read_bytes()
+    @property
+    def text(self):
+        return self.read_text()
     @property
     def parent(self: Self) -> "rDir":
         return rPath(self).parent.to_dictory()
     @property
-    def parents(self: Self) -> Sequence[rPath]:
+    def parents(self: Self) -> Sequence["rDir"]:
         return map(rDir,rPath(self).parents)
+    
     @property
     def size(self) -> int:
         return opath.getsize(self.absolute())
