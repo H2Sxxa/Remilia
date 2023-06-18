@@ -18,3 +18,9 @@ class PathTimes(BaseModel):
     createtime:float
     modifytime:float
     accesstime:float
+    
+class SizeUnits(BaseModel):
+    BYTES:str='Bytes'
+    K:str='K'
+    M:str='M'
+    G:str='G'

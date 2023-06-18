@@ -4,7 +4,22 @@ from typing_extensions import Self
 from os import path as opath
 
 from .base.rtypes import T
-from .base.models import PathTimes
+from .base.models import PathTimes, SizeUnits
+
+def format_size(size:int,unit:SizeUnits=SizeUnits()):
+    if size < 1024:
+        return(round(size,2),unit.BYTES)
+    else: 
+        KBX = size/1024
+        if KBX < 1024:
+            return(round(KBX,2),unit.K)
+        else:
+            MBX = KBX /1024
+            if MBX < 1024:
+                return(round(MBX,2),unit.M)
+            else:
+                return(round(MBX/1024),unit.G)
+
 class rPath(type(_Path()),_Path):
     def __init__(self,*args:str,**kwargs:Optional[Dict[str,T]]) -> None:
         super().__init__()
@@ -29,7 +44,7 @@ class rPath(type(_Path()),_Path):
         
 class rFile(rPath):
     def __init__(self, *args: str, **kwargs: Optional[Dict[str, T]]) -> None:
-        if self.is_dir():
+        if not self.is_file():
             raise TypeError("'%s' is not a file" % self.absolute())
         super().__init__(*args, **kwargs)
         self.encoding='utf-8'
@@ -60,6 +75,9 @@ class rFile(rPath):
     def size(self) -> int:
         return opath.getsize(self.absolute())
     
+    def fsize(self,unit:SizeUnits=SizeUnits()) -> str:
+        return format_size(self.size,unit)
+    
     @property
     def exts(self) -> List[str]:
         result=[]
@@ -85,3 +103,15 @@ class rDir(rPath):
         if not self.is_dir():
             raise TypeError("'%s' is not a dir" % self.absolute())
         super().__init__(*args, **kwargs)
+        
+    def size(self,pattern:str="*"):
+        return sum([rFile(rp).size for rp in rPath(self).glob(pattern) if rp.is_file()])
+    
+    def rsize(self,pattern:str="*"):
+        return sum([rFile(rp).size for rp in rPath(self).rglob(pattern) if rp.is_file()])
+    
+    def fsize(self,pattern:str="*",unit:SizeUnits=SizeUnits()) -> str:
+        return format_size(self.size(pattern),unit)
+                
+    def frsize(self,pattern:str="*",unit:SizeUnits=SizeUnits()) -> str:
+        return format_size(self.rsize(pattern),unit)
