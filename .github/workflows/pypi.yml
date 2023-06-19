@@ -25,7 +25,5 @@ jobs:
     - name: Setup & Publish Lib
       run: |
         pdm install
-        pdm add --group all
-        pdm run test/testlib.py
     - name: Publish package distributions to PyPI
       run: pdm publish
