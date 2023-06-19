@@ -32,7 +32,7 @@ class Log:
         super().__init__()
         self.ruler=ruler
         self.location=location
-        self.logs=map(str,logs)
+        self.logs=[str(log) for log in logs]
         self.name=name.upper()
     
     @property
@@ -75,21 +75,21 @@ class LogCat:
         self.all_logs=[]
         self.all_subs=[]
           
-    def get_logs(self,filter:Callable[[Log],bool]) -> List[Log]:
-        return [log for log in self.all_log if filter(log)]
+    def get_logs(self,filter:Callable[[Log],bool]=lambda _:True) -> List[Log]:
+        return [log for log in self.all_logs if filter(log)]
     
     def record(self,*logs:Log) -> Self:
         self.all_logs.extend(logs)
         self._subwrite(*logs)
         return self
     
-    def export(self,path:Union[rFile,rPath,Path,str],filter:Callable[[Log],bool],mode:str="w") -> Self:
+    def export(self,path:Union[rFile,rPath,Path,str],filter:Callable[[Log],bool]=lambda _:True,mode:str="w") -> Self:
         rflog=rFile(path) if not isinstance(path,rFile) else path
         rflog.write(data='\n'.join([log.plain for log in self.get_logs(filter)]),mode=mode)
         return self
     
     def subscribe(self,*pairs:Pair[Callable[[Log],bool],Union[rFile,rPath,Path,str]]) -> Self:
-        subs=map(lambda pair:Pair(pair.name,rFile(pair.value) if not isinstance(pair.value,rFile) else pair.value),pairs)
+        subs=[Pair(pair.name,rFile(pair.value) if not isinstance(pair.value,rFile) else pair.value) for pair in pairs]
         self.all_subs.extend(subs)
         return self
     
@@ -138,9 +138,9 @@ class Logger:
         
     def print(self,name:str,*log:Log) -> None:
         clog=Log(name,inspect.getmodule(inspect.stack()[1][0]).__name__,log,self.get_ruler(name))
+        self.logcat.record(clog)
         if self.vlevel >= clog.ruler.level:
             self.handle_out(clog.color)
-        self.logcat.record(clog)
     
     def __getattr__(self,name) -> "_CallMethod":
         if name.startswith("__") and name.endswith("__"):

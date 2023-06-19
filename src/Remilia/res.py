@@ -44,7 +44,7 @@ class rPath(type(_Path()),_Path):
         
 class rFile(rPath):
     def __init__(self, *args: str, **kwargs: Optional[Dict[str, T]]) -> None:
-        if not self.is_file():
+        if not self.is_file() and self.is_dir():
             raise TypeError("'%s' is not a file" % self.absolute())
         super().__init__(*args, **kwargs)
         self.encoding='utf-8'
@@ -69,7 +69,7 @@ class rFile(rPath):
         return rPath(self).parent.to_dictory()
     @property
     def parents(self: Self) -> Sequence["rDir"]:
-        return map(rDir,rPath(self).parents)
+        return [rDir(rp) for rp in rPath(self).parents]
     
     @property
     def size(self) -> int:
@@ -100,7 +100,7 @@ class rFile(rPath):
     
 class rDir(rPath):
     def __init__(self, *args: str, **kwargs: Optional[Dict[str, T]]) -> None:
-        if not self.is_dir():
+        if not self.is_dir() and self.is_file():
             raise TypeError("'%s' is not a dir" % self.absolute())
         super().__init__(*args, **kwargs)
         
