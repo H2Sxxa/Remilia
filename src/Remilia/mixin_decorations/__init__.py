@@ -1,5 +1,4 @@
-from types import MethodType
-from typing import List
+from typing import Callable, List
 from ..base.rtypes import Pair
 from ..utils.SignParas import ParaFilter
 from .omixin import gc_Mixin
@@ -18,7 +17,7 @@ class DecorationBase:
     
     @abstractmethod
     def warp(self,pair:Pair) -> Pair:
-        return Pair(Pair.attr_A,Pair.attr_B)
+        return Pair(Pair.name,Pair.value)
 
 class ParaHandleBase:
     @abstractmethod
@@ -40,7 +39,7 @@ class ParaReplacer(ParaHandleBase):
             return arg
 
 class ParaMixin(ParaHandleBase):
-    def __init__(self,mixins:Pair(str,MethodType)=[],condition=lambda para:True,gc=False) -> None:
+    def __init__(self,mixins:Pair[str,Callable]=[],condition=lambda para:True,gc=False) -> None:
         '''
         mixins: Pair(method_name,Method)
         condition: wont work until it return True
@@ -54,9 +53,9 @@ class ParaMixin(ParaHandleBase):
         new_arg=arg
         for mixin in self.mixins:
             if self.gc:
-                gc_Mixin(new_arg,mixin.attr_B,mixin.attr_A)
+                gc_Mixin(new_arg,mixin.value,mixin.name)
             else:
-                setattr(new_arg,mixin.attr_A,mixin.attr_B)
+                setattr(new_arg,mixin.name,mixin.value)
         return new_arg
     
 class ParaHooker(ParaHandleBase):
@@ -99,7 +98,7 @@ class Hooker(DecorationBase):
         self.af=afhooker
         self.ph=parahandle
     def warp(self,pair) -> Pair:
-        return Pair(pair.attr_A,self.warpper)
+        return Pair(pair.name,self.warpper)
     
     @property
     def warpper(self):
@@ -107,7 +106,7 @@ class Hooker(DecorationBase):
         filter.load_default()
         filter.fill_none()
         for pair in self.ph:
-            filter.index_put(pair.attr_A,pair.attr_B)
+            filter.index_put(pair.name,pair.value)
         def tmp(*args,**kwargs):
             self.bf(self.obj,*args,**kwargs)
             for arg,index in zip(args,range(0,len(args))):

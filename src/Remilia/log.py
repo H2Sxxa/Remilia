@@ -8,9 +8,11 @@ from time import strftime,localtime
 
 from .res import rFile, rPath
 from .base.models import Ruler
+from .base.rtypes import Pair
+
 from platform import system
 import inspect
-
+ 
 if TYPE_CHECKING:
     class _CallMethod:
         def __call__(self, *args: str) -> None:
@@ -78,10 +80,11 @@ class LogCat:
         rflog=rFile(path) if not isinstance(path,rFile) else path
         rflog.write(data='\n'.join([log.plain for log in self.all_logs if filter(log)]),mode=write_mode)
         return self
-    def subscribe(self,*paths:Union[rFile,rPath,Path,str]) -> Self:
-        subs=map(lambda path: rFile(path) if not isinstance(path,rFile) else paths,paths)
+    def subscribe(self,*pairs:Pair[Callable[[Log],bool],Union[rFile,rPath,Path,str]]) -> Self:
+        subs=map(lambda pair: rFile(pair.value) if not isinstance(pair.value,rFile) else pair.value,pairs)
         self.all_subs.extend(subs)
         return self
+    def _subrecord(self,*log:Log):pass
     
 class Logger:
     def __init__(self,logcat:LogCat=LogCat(),ruler_map:Optional[Dict[str,Ruler]]={},model:str="'%s[ '+name+' '+time+' '+location+'] %s'+text") -> None:
@@ -112,8 +115,8 @@ class Logger:
             self.to_ruler(n,self.get_ruler(n).exgenerate(model,*c))
         return self
     
-    def to_ruler(self,name:str,level:int) -> Self:
-        self.ruler_map.update({name.upper():level})
+    def to_ruler(self,name:str,ruler:Ruler) -> Self:
+        self.ruler_map.update({name.upper():ruler})
         return self
     
     def get_ruler(self,name:str) -> Ruler:
@@ -135,8 +138,8 @@ class Logger:
                 f"'{self.__class__.__name__}' object has no attribute '{name}'"
             )
         return partial(self.print,name)
-
-instance:Logger = None
+    
+instance:Logger
 def get_logger(*args,**kwargs) -> Logger:
     '''
     args & kwargs only work under (instance == None)

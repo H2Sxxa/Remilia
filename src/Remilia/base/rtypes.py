@@ -1,6 +1,10 @@
-from typing import TypeVar
+from typing import Generic, TypeVar
+from typing_extensions import Self
 
-
+RT=TypeVar("RT")
+T=TypeVar("T")
+NT=TypeVar("NT")
+VT=TypeVar("VT")
 class VarBuilder:
     def new(self,parents:tuple,custom_warp=None,init_args:tuple=(),init_kwargs:dict={}):
         return self.new_cls(parents=parents,custom_warp=custom_warp)(*init_args,**init_kwargs)
@@ -36,29 +40,25 @@ def typedet(string:str,strict=True) -> any:
         pass
     return string
 
-class Pair:
-    def __init__(self,a,b) -> None:
-        self.a=a
-        self.b=b
+class Pair(Generic[NT,VT]):
+    def __init__(self,name:T,value:T) -> None:
+        self._name=name
+        self._value=value
     
-    def getA(self):
-        return self.a
+    def getname(self) -> T:
+        return self._name
     
-    def getB(self):
-        return self.b
-    
-    @property
-    def attr_A(self):
-        return self.getA()
+    def getvalue(self) -> T:
+        return self._value
     
     @property
-    def attr_B(self):
-        return self.getB()
+    def name(self) -> T:
+        return self.getname()
+    
+    @property
+    def value(self) -> T:
+        return self.getvalue()
     
     @staticmethod
-    def fromkv(k,v):
-        return Pair(k,v)
-    
-    
-RT=TypeVar("RT")
-T=TypeVar("T")
+    def fromnv(name:T,value:T) -> Self:
+        return Pair(name,value)

@@ -95,8 +95,8 @@ class Mixin:
                 while isinstance(v,DecorationBase):
                     pair=v.warp(Pair(k,v))
                     
-                    k=pair.attr_A
-                    v=pair.attr_B
+                    k=pair.name
+                    v=pair.value
                     
                 if isinstance(v,Shadow):
                     if self.gc_mixin:
