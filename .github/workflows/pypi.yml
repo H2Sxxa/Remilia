@@ -11,11 +11,12 @@ jobs:
   pypi-publish:
     name: Test Lib & Publish
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
+    permissions: id-token: write
     steps:
     - uses: actions/checkout@v3
     - uses: pdm-project/setup-pdm@v3
+      with:
+        version: 'head'
     - name: Set up Python
       uses: actions/setup-python@v3
       with:
@@ -27,6 +28,7 @@ jobs:
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
       run: |
         pdm install
-        pdm add --group publish
+        pdm add --group all
         pdm run test/testlib.py
-        pdm build && pdm run twine upload dist/*
+      - name: Publish package distributions to PyPI
+        run: pdm publish
