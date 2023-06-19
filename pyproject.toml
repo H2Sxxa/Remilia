@@ -44,4 +44,3 @@ tui = [
 ]
 all = ["noneprompt","pixivpy_async"]
 publish = ["noneprompt","pixivpy_async","twine"]
-build = []

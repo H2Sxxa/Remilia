@@ -29,4 +29,4 @@ jobs:
         pdm install
         pdm add --group publish
         pdm run test/testlib.py
-        pdm build && twine upload dist/*
+        pdm build && pdm run twine upload dist/*
