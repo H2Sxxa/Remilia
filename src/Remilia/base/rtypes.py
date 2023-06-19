@@ -41,24 +41,24 @@ def typedet(string:str,strict=True) -> any:
     return string
 
 class Pair(Generic[NT,VT]):
-    def __init__(self,name:T,value:T) -> None:
+    def __init__(self,name:NT,value:VT) -> None:
         self._name=name
         self._value=value
     
-    def getname(self) -> T:
+    def getname(self) -> NT:
         return self._name
     
-    def getvalue(self) -> T:
+    def getvalue(self) -> VT:
         return self._value
     
     @property
-    def name(self) -> T:
+    def name(self) -> NT:
         return self.getname()
     
     @property
-    def value(self) -> T:
+    def value(self) -> VT:
         return self.getvalue()
     
     @staticmethod
-    def fromnv(name:T,value:T) -> Self:
+    def fromnv(name:NT,value:VT) -> Self:
         return Pair(name,value)

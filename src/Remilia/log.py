@@ -70,21 +70,36 @@ class Log:
 
 class LogCat:
     all_logs:List[Log]
-    all_subs:List[Union[rFile,rPath,Path,str]]
+    all_subs:List[Pair[Callable[[Log],bool],rFile]]
     def __init__(self) -> None:
         self.all_logs=[]
-    def record(self,*log:Log) -> Self:
-        self.all_logs.extend(log)
+        self.all_subs=[]
+          
+    def get_logs(self,filter:Callable[[Log],bool]) -> List[Log]:
+        return [log for log in self.all_log if filter(log)]
+    
+    def record(self,*logs:Log) -> Self:
+        self.all_logs.extend(logs)
+        self._subwrite(*logs)
         return self
-    def export(self,path:Union[rFile,rPath,Path,str],filter:Callable[[Log],bool],write_mode:str="w") -> Self:
+    
+    def export(self,path:Union[rFile,rPath,Path,str],filter:Callable[[Log],bool],mode:str="w") -> Self:
         rflog=rFile(path) if not isinstance(path,rFile) else path
-        rflog.write(data='\n'.join([log.plain for log in self.all_logs if filter(log)]),mode=write_mode)
+        rflog.write(data='\n'.join([log.plain for log in self.get_logs(filter)]),mode=mode)
         return self
+    
     def subscribe(self,*pairs:Pair[Callable[[Log],bool],Union[rFile,rPath,Path,str]]) -> Self:
-        subs=map(lambda pair: rFile(pair.value) if not isinstance(pair.value,rFile) else pair.value,pairs)
+        subs=map(lambda pair:Pair(pair.name,rFile(pair.value) if not isinstance(pair.value,rFile) else pair.value),pairs)
         self.all_subs.extend(subs)
         return self
-    def _subrecord(self,*log:Log):pass
+    
+    def _subwrite(self,*logs:Log) -> None:
+        for sub in self.all_subs:
+            mode ="a" if sub.value.exists() else "w"
+            for log in logs:
+                if sub.name(log):
+                    sub.value.write(data=log.plain,mode=mode)
+            
     
 class Logger:
     def __init__(self,logcat:LogCat=LogCat(),ruler_map:Optional[Dict[str,Ruler]]={},model:str="'%s[ '+name+' '+time+' '+location+'] %s'+text") -> None:
@@ -98,7 +113,6 @@ class Logger:
         self.logcat=logcat
         self.handle_out=print
         self.vlevel=5
-        self.wlevel=0
         global instance
         instance=self
     
@@ -106,9 +120,6 @@ class Logger:
         self.vlevel=vlevel
         return self
     
-    def set_wlevel(self,wlevel:int) -> Self:
-        self.wlevel=wlevel
-        return self
     
     def ex_ruler(self,model:str,**colors:Dict[str,tuple]) -> Self:
         for n,c in colors.items():
@@ -129,8 +140,7 @@ class Logger:
         clog=Log(name,inspect.getmodule(inspect.stack()[1][0]).__name__,log,self.get_ruler(name))
         if self.vlevel >= clog.ruler.level:
             self.handle_out(clog.color)
-        if self.wlevel >= clog.ruler.level:
-            self.logcat.record(clog)
+        self.logcat.record(clog)
     
     def __getattr__(self,name) -> "_CallMethod":
         if name.startswith("__") and name.endswith("__"):
