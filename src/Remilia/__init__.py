@@ -1,6 +1,7 @@
 from . import (
     log,
     res,
+    litedb,
     utils,
     base,
     mixin,
@@ -10,6 +11,7 @@ from . import (
 __all__=[
     "log",
     "res",
+    "litedb",
     "utils",
     "base",
     "mixin",

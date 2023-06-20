@@ -2,6 +2,7 @@ from pathlib import Path as _Path
 from typing import Dict, List, Optional, Sequence, Union
 from typing_extensions import Self
 from os import path as opath
+from os import makedirs,mkdir
 
 from .base.rtypes import T
 from .base.models import PathTimes, SizeUnits
@@ -25,15 +26,24 @@ class rPath(type(_Path()),_Path):
         super().__init__()
         self._args=args
         self._kwargs=kwargs
+        
     def to_file(self) -> "rFile":
         return rFile(self)
+    
     def to_dictory(self) -> "rDir":
         return rDir(self)
+    
+    def to_path(self) -> "rPath":
+        return rPath(self)
+    
     def convey(self) -> Union["rFile","rDir"]:
+        if not self.exists():
+            raise IOError("%s is not existed,can't convey a unexisted rPath" % self)
         if self.is_dir():
             return rDir(self)
         else:
             return rFile(self)
+        
     @property
     def times(self) -> PathTimes:
         return PathTimes(
@@ -44,29 +54,39 @@ class rPath(type(_Path()),_Path):
         
 class rFile(rPath):
     def __init__(self, *args: str, **kwargs: Optional[Dict[str, T]]) -> None:
-        if not self.is_file() and self.is_dir():
-            raise TypeError("'%s' is not a file" % self.absolute())
         super().__init__(*args, **kwargs)
         self.encoding='utf-8'
-        
+    
+    def set_encoding(self,encoding='utf-8') -> Self:
+        self.encoding=encoding
+        return self
+    
+    def check(self):
+        return True if self.exists() and self.is_file() else False
+    
     def read_text(self, errors: Union[str,None]=None) -> str:
         return super().read_text(self.encoding, errors)
     
     def write(self,data:T="",mode:str="w",*args,**kwargs) -> None:
         with self.open(mode=mode,encoding=self.encoding,*args,**kwargs) as f:
             return f.write(data)
+        
     def read(self,mode:str="r",*args,**kwargs) -> Union[str,bytes]:
         with self.open(mode=mode,encoding=self.encoding,*args,**kwargs) as f:
             return f.read()
+        
     @property
     def bytes(self):
         return self.read_bytes()
+    
     @property
     def text(self):
         return self.read_text()
+    
     @property
     def parent(self: Self) -> "rDir":
         return rPath(self).parent.to_dictory()
+    
     @property
     def parents(self: Self) -> Sequence["rDir"]:
         return [rDir(rp) for rp in rPath(self).parents]
@@ -99,11 +119,9 @@ class rFile(rPath):
         return opath.splitext(self)[-1]
     
 class rDir(rPath):
-    def __init__(self, *args: str, **kwargs: Optional[Dict[str, T]]) -> None:
-        if not self.is_dir() and self.is_file():
-            raise TypeError("'%s' is not a dir" % self.absolute())
-        super().__init__(*args, **kwargs)
-        
+    def check(self):
+        return True if self.exists() and self.is_dir() else False
+    
     def size(self,pattern:str="*"):
         return sum([rFile(rp).size for rp in rPath(self).glob(pattern) if rp.is_file()])
     
@@ -115,3 +133,11 @@ class rDir(rPath):
                 
     def frsize(self,pattern:str="*",unit:SizeUnits=SizeUnits()) -> str:
         return format_size(self.rsize(pattern),unit)
+    
+    def makedirs(self,*args,**kwargs) -> Self:
+        makedirs(self.absolute(),*args,**kwargs)
+        return self
+    
+    def makedirs(self,*args,**kwargs) -> Self:
+        mkdir(self.absolute(),*args,**kwargs)
+        return self
