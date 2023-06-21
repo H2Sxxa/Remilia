@@ -7,6 +7,9 @@ from os import makedirs,mkdir
 from .base.rtypes import T
 from .base.models import PathTimes, SizeUnits
 
+class NotFoundError(OSError):pass
+class DirectoryNotFoundError(OSError):pass
+
 def format_size(size:int,unit:SizeUnits=SizeUnits()):
     if size < 1024:
         return(round(size,2),unit.BYTES)
@@ -26,7 +29,10 @@ class rPath(type(_Path()),_Path):
         super().__init__()
         self._args=args
         self._kwargs=kwargs
-        
+    
+    def to_string(self) -> str:
+        return str(self)
+    
     def to_file(self) -> "rFile":
         return rFile(self)
     
@@ -38,7 +44,7 @@ class rPath(type(_Path()),_Path):
     
     def convey(self) -> Union["rFile","rDir"]:
         if not self.exists():
-            raise IOError("%s is not existed,can't convey a unexisted rPath" % self)
+            raise NotFoundError("%s is not existed,can't convey a unexisted rPath" % self)
         if self.is_dir():
             return rDir(self)
         else:
@@ -61,8 +67,8 @@ class rFile(rPath):
         self.encoding=encoding
         return self
     
-    def check(self):
-        return True if self.exists() and self.is_file() else False
+    def check(self) -> bool:
+        return self.exists() and self.is_file()
     
     def read_text(self, errors: Union[str,None]=None) -> str:
         return super().read_text(self.encoding, errors)
@@ -120,8 +126,8 @@ class rFile(rPath):
         return opath.splitext(self)[-1]
     
 class rDir(rPath):
-    def check(self):
-        return True if self.exists() and self.is_dir() else False
+    def check(self) -> bool:
+        return self.exists() and self.is_dir()
     
     def size(self,pattern:str="*"):
         return sum([rFile(rp).size for rp in rPath(self).glob(pattern) if rp.is_file()])
