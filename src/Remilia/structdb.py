@@ -20,7 +20,7 @@ class DataStructBase(ABC):
         file.write(self._tostring(self.__updatedict(self.readdict(file),data)))
         return self
     
-    def pop(self,file:rFile,key:NT) -> Self:
+    def popkv(self,file:rFile,key:NT) -> Self:
         data=self.readdict(file)
         data.pop(key)
         return self.writedict(file,data)
@@ -78,7 +78,7 @@ class DataBase:
             return self.cget_file(name)
         else:
             return self.get_file(name)
-        
+    
     def getc(self,name:str) -> "DataBase":
         if self.auto_create:
             return self.cget_cate(name)
@@ -92,6 +92,8 @@ class DataBase:
         else:
             raise FileNotFoundError("%s does't exist"%rf)
 
+    
+    
     def get_cate(self,name:str) -> "DataBase":
         rf=rDir(self.root,name)
         if rf.check():
@@ -99,7 +101,7 @@ class DataBase:
         else:
             raise DirectoryNotFoundError("%s does't exist"%rf)
 
-    def cget_file(self,name:str) -> "DataBase":
+    def cget_file(self,name:str) -> rFile:
         rf=rFile(self.root,name)
         return rf if rf.check() else self.createfile(name)
 
@@ -115,7 +117,10 @@ class DataBase:
 
     def get_all(self) -> List[Union["DataBase",rFile]]:
         return [rp.to_file() if rp.to_file().check() else DataBase(rp,self.struct,self.auto_create) for rp in self.root.glob("*")]
-
+    
+    def get_dbsf(self,name:str) -> "DBSubFile":
+        return DBSubFile(self.getf(name),self)
+    
     #struct
     def readkv(self,name:str,key:NT) -> VT:
         return self.struct.readkv(self.getf(name),key)
@@ -130,16 +135,45 @@ class DataBase:
         self.struct.writedict(self.getf(name),data)
         return self
     
-    def pop(self,name:str,key:NT) -> Self:
-        self.struct.pop(self.getf(name),key)
+    def popkv(self,name:str,key:NT) -> Self:
+        self.struct.popkv(self.getf(name),key)
         return self
     
     def fastwrite(self,name:str,func:Callable[[Dict[NT,VT]],Dict[NT,VT]]) -> Self:
         self.struct.fastwrite(self.getf(name),func)
         return self
     
+    #magic
     def __str__(self) -> str:
         return self.root.to_string()
     
     def __repr__(self) -> str:
         return "DataBase('%s')" % self.root
+
+class DBSubFile:
+    def __init__(self,file:rFile,db:DataBase) -> None:
+        self.db=db
+        self.file=file
+        
+    def writekv(self,key:NT,value:VT) -> Self:
+        self.db.writekv(self.file.name,key,value)
+        return self
+    
+    def writedict(self,data:Dict[NT,VT]) -> Self:
+        self.db.writedict(self.file.name,data)
+        return self
+    
+    def popkv(self,key:NT) -> Self:
+        self.db.popkv(self.file.name,key)
+        return self
+    
+    def fastwrite(self,func:Callable[[Dict[NT,VT]],Dict[NT,VT]]) -> Self:
+        self.db.fastwrite(self.file.name,func)
+        return self
+    
+    def readkv(self,key:NT) -> VT:
+        return self.db.readkv(self.file.name,key)
+    
+    def readdict(self) -> Dict[NT,VT]:
+        return self.db.readdict(self.file.name)
+    
