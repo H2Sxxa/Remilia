@@ -161,8 +161,15 @@ class DirBuilder:
     
     def back(self) -> "DirBuilder":
         return DirBuilder(self.root.parent.to_dictory().makedirs())
+    
+    @property
+    def pback(self) -> "DirBuilder":
+        return DirBuilder(self.root.parent.to_dictory().makedirs())
 
-    def create(self,name:str) -> Self:
+    def create_dir(self,name:str) -> Self:
         rDir(self.root,name).makedirs()
         return self
-        
+    
+    def create_file(self,name:str,data:str) -> Self:
+        rFile(self.root,name).write(data)
+        return self
