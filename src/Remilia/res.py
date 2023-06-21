@@ -145,6 +145,24 @@ class rDir(rPath):
         makedirs(self.absolute(),exist_ok=exist_ok,*args,**kwargs)
         return self
     
-    def makedir(self,*args,**kwargs) -> Self:
+    def mkdir(self,*args,**kwargs) -> Self:
         mkdir(self.absolute(),*args,**kwargs)
         return self
+    
+    
+class DirBuilder:
+    root:rDir
+    
+    def __init__(self,root:Union[rDir,str]=rDir("")) -> None:
+        self.root=root
+        
+    def forward(self,name:str) -> "DirBuilder":
+        return DirBuilder(rDir(self.root,name).makedirs())
+    
+    def back(self) -> "DirBuilder":
+        return DirBuilder(self.root.parent.to_dictory().makedirs())
+
+    def create(self,name:str) -> Self:
+        rDir(self.root,name).makedirs()
+        return self
+        
