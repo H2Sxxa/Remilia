@@ -24,7 +24,7 @@ class DataStructBase(ABC):
         return self.writedict(file,{key:value})
     
     def writedict(self,file:rFile,data:Dict[NT,VT]) -> Self:
-        file.write(self._tostring(self.readdict(file).update(data)))
+        file.write(self._tostring(self.__updatedict(self.readdict(file),data)))
         return self
     
     def pop(self,file:rFile,key:NT) -> Self:
@@ -34,6 +34,10 @@ class DataStructBase(ABC):
     
     def fastwrite(self,file:rFile,func:Callable[[Dict[NT,VT]],Dict[NT,VT]]) -> Self:
         return self.writedict(file,func(self.readdict(file)))
+    
+    def __updatedict(self,data:Dict[NT,VT],addons:Dict[NT,VT]):
+        data.update(addons)
+        return data
     
     @abstractmethod
     def _initdata(self) -> str:
@@ -65,10 +69,10 @@ class YamlStruct(DataStructBase):
     
 class DataBase:
     def __init__(self,root:Union[rPath,rDir],struct:DataStructBase,auto_create_file:bool=True) -> None:
-        self.root=root
+        self.root=root if isinstance(root,rPath) else rPath(root)
         self.struct=struct
         self.auto_create_file=auto_create_file
-        root.to_dictory().makedirs()
+        self.root.to_dictory().makedirs()
 
     def get(self,name:str) -> rFile:
         if self.auto_create_file:
@@ -104,7 +108,7 @@ class DataBase:
         return self.struct.writekv(self.get(name),key,value)
     
     def writedict(self,name:str,data:Dict[NT,VT]) -> Self:
-        self.struct.writedict(self)
+        self.struct.writedict(self.get(name),data)
         return self
     
     def pop(self,name:str,key:NT) -> Self:

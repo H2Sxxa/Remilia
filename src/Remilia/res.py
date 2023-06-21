@@ -67,10 +67,11 @@ class rFile(rPath):
     def read_text(self, errors: Union[str,None]=None) -> str:
         return super().read_text(self.encoding, errors)
     
-    def write(self,data:T="",mode:str="w",*args,**kwargs) -> None:
+    def write(self,data:T="",mode:str="w",*args,**kwargs) -> Self:
         with self.open(mode=mode,encoding=self.encoding,*args,**kwargs) as f:
-            return f.write(data)
-        
+            f.write(data)
+        return self
+    
     def read(self,mode:str="r",*args,**kwargs) -> Union[str,bytes]:
         with self.open(mode=mode,encoding=self.encoding,*args,**kwargs) as f:
             return f.read()
@@ -134,10 +135,10 @@ class rDir(rPath):
     def frsize(self,pattern:str="*",unit:SizeUnits=SizeUnits()) -> str:
         return format_size(self.rsize(pattern),unit)
     
-    def makedirs(self,*args,**kwargs) -> Self:
-        makedirs(self.absolute(),*args,**kwargs)
+    def makedirs(self,exist_ok=True,*args,**kwargs) -> Self:
+        makedirs(self.absolute(),exist_ok=exist_ok,*args,**kwargs)
         return self
     
-    def makedirs(self,*args,**kwargs) -> Self:
+    def makedir(self,*args,**kwargs) -> Self:
         mkdir(self.absolute(),*args,**kwargs)
         return self
