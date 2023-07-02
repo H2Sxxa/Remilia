@@ -98,7 +98,7 @@ class LogCat:
             mode ="a" if sub.value.exists() else "w"
             for log in logs:
                 if sub.name(log):
-                    sub.value.write(data=log.plain,mode=mode)
+                    sub.value.write(data=log.plain+"\n",mode=mode)
             
     
 class Logger:
