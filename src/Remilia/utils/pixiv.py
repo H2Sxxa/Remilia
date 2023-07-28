@@ -26,16 +26,14 @@ def getHeader(auth:dict):
 
 
 import asyncio
-import logging
 import json
-import socket
-from typing import List, Dict, Any
-import ssl
-import aiohttp
 import re
+import socket
+from typing import Any, Dict, List
 
-from aiohttp.abc import AbstractResolver
+import aiohttp
 from aiohttp import ClientTimeout
+from aiohttp.abc import AbstractResolver
 
 '''
 come from pixiv_async

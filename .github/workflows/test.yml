@@ -26,6 +26,5 @@ jobs:
     
     - name: Setup & Test Lib
       run: |
-        pdm install
-        pdm add --group all
+        pdm install -G all
         pdm run test/testlib.py

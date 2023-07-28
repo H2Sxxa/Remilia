@@ -1,4 +1,4 @@
-from . import terminable_thread,Timeout
+from . import Timeout, terminable_thread
 from .Timeout import timeout
 
 '''

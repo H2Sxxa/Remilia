@@ -1,4 +1,5 @@
 from typing import Generic, TypeVar
+
 from typing_extensions import Self
 
 RT=TypeVar("RT")
@@ -23,7 +24,10 @@ class VarBuilder:
             return warpin(*arg,**args)
         return inner
     
-import json,re
+import json
+import re
+
+
 def typedet(string:str,strict=True) -> any:
     if not re.match(r"[\u4E00-\u9FA5A-Za-z]",string) and re.match(r"[0-9]",string) and not re.match(r"[`~!@#$%^&*()_\-+=<>?:\"{}|,\/;'\\[\]·~！@#￥%……&*（）——\-+={}|《》？：“”【】、；‘'，。、]",string):
         if "." in string:

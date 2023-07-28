@@ -1,10 +1,13 @@
-import json,yaml
+import json
+from abc import ABC, abstractmethod
 from typing import Callable, Dict, List, Union
-from typing_extensions import Self
-from abc import ABC,abstractmethod
 
-from .res import rDir, rFile, rPath,DirectoryNotFoundError
-from .base.rtypes import NT,VT
+import yaml
+from typing_extensions import Self
+
+from .base.rtypes import NT, VT
+from .res import DirectoryNotFoundError, rDir, rFile, rPath
+
 
 class DataStructBase(ABC):
     def readkv(self,file:rFile,key:NT) -> VT:
@@ -176,4 +179,3 @@ class DBSubFile:
     
     def readdict(self) -> Dict[NT,VT]:
         return self.db.readdict(self.file.name)
-    

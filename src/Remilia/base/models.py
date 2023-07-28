@@ -1,5 +1,6 @@
-from typing_extensions import Self
 from pydantic import BaseModel
+from typing_extensions import Self
+
 
 class Ruler(BaseModel):
     '''
