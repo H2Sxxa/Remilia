@@ -7,6 +7,8 @@ from Remilia.base.exceptions import NoSuchMethodError
 
 from .signs import Signs
 
+SHADOW_SELF="__shadowaccssor_self__"
+SHADOW_MAP="__shadowmethod_map__"
 
 SelfType=_empty
 
@@ -33,11 +35,11 @@ class Shadow:
         return self.name + "_%s" % str(uuid4()).replace("-","")
 
     def shadowUpdate(self) -> None:
-        if not hasattr(self.cls, "__shadowmethod_map__"):
-            setattr(self.cls, "__shadowmethod_map__", dict())
+        if not hasattr(self.cls, SHADOW_MAP):
+            setattr(self.cls, SHADOW_MAP, dict())
 
         shadowmap: Dict[str, Dict[MethodType, List]]
-        shadowmap = getattr(self.cls, "__shadowmethod_map__")
+        shadowmap = getattr(self.cls, SHADOW_MAP)
         if not shadowmap.__contains__(self.name):
             shadowmap.update({self.name: dict()})
         while True:
@@ -90,3 +92,10 @@ class ShadowInvoker:
 
     def invokeFirstWithType(self,paratype:List[object],*args,**kwargs) -> Any:
         return self.findFirstWithType(paratype)(*args,**kwargs)
+
+class ShadowAccessor:
+    def __init__(self,cls:Type) -> None:
+        self.cls=cls
+    def setAccessible(self,name:str) -> None:
+        setattr(self.cls,name,lambda _:getattr(_,"_%s%s" % (self.cls.__name__,name)))
+        setattr(self.cls,name,property(getattr(self.cls,name)))
