@@ -50,6 +50,20 @@ class Shadow:
 class ShadowInvoker:
     def __init__(self,cls:Type) -> None:
         self.cls=cls
+    def findAllWithType(self,paratype:List[object]) -> List[MethodType]:
+        shadowmap: Dict[str, Dict[MethodType, List]]
+        shadowmap = getattr(self.cls, "__shadowmethod_map__")
+        result=[]
+        for nvmap in [v for _,v in shadowmap.items()]:
+            result.extend([n for n,v in nvmap.items() if v == paratype])
+        return result
+    
+    def findFirstWithType(self,paratype:List[object]) -> List[MethodType]:
+        try:
+            return self.findAllWithType(paratype)[0]
+        except:
+            raise NoSuchMethodError("can't find method with %s in %s"%(paratype,self.cls))   
+                 
     def findAll(self,method:Union[str,MethodType],paratype:List[object]) -> List[MethodType]:
         shadowmap: Dict[str, Dict[MethodType, List]]
         shadowmap = getattr(self.cls, "__shadowmethod_map__")
@@ -63,10 +77,16 @@ class ShadowInvoker:
         try:
             return self.findAll(method,paratype)[0]
         except:
-            raise NoSuchMethodError("can't find method with %s in %s"%(paratype,self.cls))
+            raise NoSuchMethodError("can't find '%s' method with %s in %s"%(method,paratype,self.cls))
         
     def invokeAll(self,method:Union[str,MethodType],paratype:List[object],*args,**kwargs) -> List[Any]:
         return [mtd(*args,**kwargs) for mtd in self.findAll(method,paratype)]
 
     def invokeFirst(self,method:Union[str,MethodType],paratype:List[object],*args,**kwargs) -> Any:
         return self.findFirst(method,paratype)(*args,**kwargs)
+
+    def invokeAllWithType(self,paratype:List[object],*args,**kwargs) -> List[Any]:
+        return [mtd(*args,**kwargs) for mtd in self.findAllWithType(paratype)]
+
+    def invokeFirstWithType(self,paratype:List[object],*args,**kwargs) -> Any:
+        return self.findFirstWithType(paratype)(*args,**kwargs)
