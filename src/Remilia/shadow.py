@@ -3,8 +3,7 @@ from typing import Any, Callable, Dict, List, Type, Union
 from inspect import _empty
 from uuid import uuid4
 
-from Remilia.base.exceptions import NoSuchMethodError
-
+from .base.exceptions import ExistedObjectError, NoSuchMethodError
 from .signs import Signs
 
 SHADOW_SELF="__shadowaccssor_self__"
@@ -96,6 +95,9 @@ class ShadowInvoker:
 class ShadowAccessor:
     def __init__(self,cls:Type) -> None:
         self.cls=cls
-    def setAccessible(self,name:str) -> None:
+    def setAccessible(self,name:str,force=False) -> None:
+        if not force:
+            if hasattr(self.cls,name):
+                raise ExistedObjectError("%s has existed object -> %s" % (self.cls.__name__,name))
         setattr(self.cls,name,lambda _:getattr(_,"_%s%s" % (self.cls.__name__,name)))
         setattr(self.cls,name,property(getattr(self.cls,name)))
