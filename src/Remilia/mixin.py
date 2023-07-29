@@ -7,7 +7,6 @@ from inspect import getsourcelines
 from typing_extensions import Self
 from pydantic import BaseModel
 
-from .shadow import ShadowAccessor
 from .base.exceptions import MixinError
 
 

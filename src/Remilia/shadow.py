@@ -3,54 +3,54 @@ from typing import Any, Callable, Dict, List, Type, Union
 from inspect import _empty
 from uuid import uuid4
 
+from .mixin import MixinBase, MixinTools
 from .base.exceptions import ExistedObjectError, NoSuchMethodError
 from .signs import Signs
 
 SHADOW_SELF = "__shadowaccssor_self__"
 SHADOW_MAP = "__shadowmethod_map__"
 
-SelfType = _empty
+EmptyType = _empty
 
 
 def getShadowWarpWithCls(cls):
     return Shadow.withCls(cls)
 
 
-class Shadow:
-    def init(self, method: MethodType) -> MethodType:
-        self.name = method.__name__
-        self.method = method
-        self.shadowUpdate()
-        return method
+class Shadow(MixinBase):
+    def mixin(self) -> None:
+        for t_cls in self.configs.target:
+            if not self.mixin_hasattr(t_cls, SHADOW_MAP):
+                self.mixin_setattr(t_cls, SHADOW_MAP, dict())
 
-    @staticmethod
-    def withCls(cls: Type) -> Callable[[Type], Callable[[MethodType], MethodType]]:
-        return Shadow()._withCls(cls)
-
-    def _withCls(self, cls: Type) -> Callable[[MethodType], MethodType]:
-        self.cls = cls
-        return self.init
+            shadowmap: Dict[str, Dict[MethodType, List]]
+            shadowmap = self.mixin_getattr(t_cls, SHADOW_MAP)
+            if not shadowmap.__contains__(self.method):
+                shadowmap.update({self.method: dict()})
+            while True:
+                tmpname = self.shadowName
+                if not shadowmap.get(self.method).__contains__(tmpname):
+                    self.mixin_setattr(t_cls, tmpname, self.mixinmethod)
+                    shadowmap.get(self.method).update(
+                        {
+                            self.mixin_getattr(t_cls, tmpname): Signs.getParasAsType(
+                                self.mixinmethod
+                            )
+                        }
+                    )
+                    break
 
     @property
     def shadowName(self) -> str:
-        return self.name + "_%s" % str(uuid4()).replace("-", "")
+        return self.method + "_%s" % str(uuid4()).replace("-", "")
 
-    def shadowUpdate(self) -> None:
-        if not hasattr(self.cls, SHADOW_MAP):
-            setattr(self.cls, SHADOW_MAP, dict())
-
-        shadowmap: Dict[str, Dict[MethodType, List]]
-        shadowmap = getattr(self.cls, SHADOW_MAP)
-        if not shadowmap.__contains__(self.name):
-            shadowmap.update({self.name: dict()})
-        while True:
-            tmpname = self.shadowName
-            if not shadowmap.get(self.name).__contains__(tmpname):
-                setattr(self.cls, tmpname, self.method)
-                shadowmap[self.name].update(
-                    {getattr(self.cls, tmpname): Signs.getParasAsType(self.method)}
-                )
-                break
+    @staticmethod
+    def withValue(
+        method: Union[str, MethodType, None] = None,
+        gc: bool = None,
+        mixintools: MixinTools = MixinTools(),
+    ):
+        return Shadow.cast(Shadow, None, method, gc, mixintools).init
 
 
 class ShadowInvoker:
@@ -114,13 +114,13 @@ class ShadowInvoker:
 
 
 class ShadowAccessor:
-    def __init__(self, cls: Type,force=False) -> None:
+    def __init__(self, cls: Type, force=False) -> None:
         self.cls = cls
-        self.force=force
-        
+        self.force = force
+
     def setAccessible(self, name: str, force=None) -> None:
         if force == None:
-            force=self.force
+            force = self.force
         if not force:
             if hasattr(self.cls, name):
                 raise ExistedObjectError(
@@ -131,5 +131,5 @@ class ShadowAccessor:
         )
         setattr(self.cls, name, property(getattr(self.cls, name)))
 
-    def Accessor(self,method:Callable):
+    def Accessor(self, method: Callable):
         self.setAccessible(method.__name__)
