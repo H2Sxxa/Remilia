@@ -1,3 +1,4 @@
+from types import MethodType
 from typing import Generic, TypeVar
 
 from typing_extensions import Self
