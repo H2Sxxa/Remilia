@@ -171,7 +171,25 @@ class MixinBase:
         self.method = method
         self.gc = gc
         return self
+    
+class MethodGlue:pass
 
+class Accessor(MixinBase):
+    def mixin(self) -> None:
+        property_name="_%s%s" % (self.configs.mixincls.__name__,self.method)
+        pre=[
+            self.mixin_setattr(t, property_name, lambda _:mixin_getattr(_, "_%s%s" % (t.__name__, self.method)))
+            for t in self.configs.target
+        ]
+        warp=[
+            self.mixin_setattr(t, property_name, property(self.mixin_getattr(t,property_name)))
+            for t in self.configs.target
+        ]
+        return [pre,warp]
+    
+    @staticmethod
+    def withValue(property: Union[str, MethodType, None] = None, gc: bool = None):
+        return Accessor.cast(Accessor, None, property, gc)
 
 class Inject(MixinBase):
     @staticmethod
@@ -183,7 +201,6 @@ class Redirect(MixinBase):
     @staticmethod
     def withValue(at: At, method: Union[str, MethodType, None] = None, gc: bool = None):
         return Redirect.cast(Redirect, at, method, gc)
-
 
 class OverWrite(MixinBase):
     def mixin(self) -> None:
