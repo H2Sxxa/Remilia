@@ -200,7 +200,7 @@ class Accessor(MixinBase):
             self.mixin_setattr(
                 t,
                 property_name,
-                lambda _: mixin_getattr(_, "_%s%s" % (t.__name__, self.method)),
+                lambda _: mixin_getattr(_, "_%s%s" % (_.__class__.__name__, self.method)),
             )
             for t in self.configs.target
         ]

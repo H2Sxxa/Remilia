@@ -124,6 +124,6 @@ class ShadowAccessor:
                     "%s has existed object -> %s" % (self.cls.__name__, name)
                 )
         setattr(
-            self.cls, name, lambda _: getattr(_, "_%s%s" % (self.cls.__name__, name))
+            self.cls, name, lambda _: getattr(_, "_%s%s" % (_.__class__.__name__, name))
         )
         setattr(self.cls, name, property(getattr(self.cls, name)))
