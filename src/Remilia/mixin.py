@@ -21,25 +21,26 @@ class At(Enum):
 
 MIXIN_CONFIGS = "__mixin_configs__"
 
-_freeze_action:List[Dict[str,object]]=[]
+_freeze_action: List[Dict[str, object]] = []
+
 
 def mixin_getattr(__o: object, __name: str, __gc=False) -> Any:
     if __gc:
-        return get_referents(__o.__dict__)[__name]
+        return get_referents(__o.__dict__)[0][__name]
     else:
         return getattr(__o, __name)
 
 
 def mixin_setattr(__o: object, __name: str, __value: Any, __gc=False) -> None:
     if __gc:
-        get_referents(__o.__dict__)[__name] = __value
+        get_referents(__o.__dict__)[0][__name] = __value
     else:
         setattr(__o, __name, __value)
 
 
 def mixin_hasattr(__o: object, __name: str, __gc=False) -> None:
     if __gc:
-        return get_referents(__o.__dict__).__contains__(__name)
+        return get_referents(__o.__dict__)[0].__contains__(__name)
     else:
         return hasattr(__o, __name)
 
@@ -80,6 +81,12 @@ class MixinConfigs(BaseModel):
     gc: bool = None
 
 
+class MixinTools(BaseModel):
+    getattr: Callable = mixin_getattr
+    setattr: Callable = mixin_setattr
+    hasattr: Callable = mixin_hasattr
+
+
 class MixinCallable(Callable):
     @property
     def __mixin_configs__(self) -> List[Type]:
@@ -96,7 +103,7 @@ class MixinBase:
     method: str
     mixinmethod: MethodType
     configs: MixinConfigs
-    
+
     @abstractmethod
     def mixin(self) -> None:
         ...
@@ -122,13 +129,13 @@ class MixinBase:
         ...
 
     def mixin_getattr(self, __o: object, __name: str) -> Any:
-        return mixin_getattr(__o, __name, self.gc)
+        return self.mixintools.getattr(__o, __name, self.gc)
 
     def mixin_setattr(self, __o: object, __name: str, __value: Any) -> None:
-        return mixin_setattr(__o, __name, __value, self.gc)
+        return self.mixintools.setattr(__o, __name, __value, self.gc)
 
     def mixin_hasattr(self, __o: object, __name: str) -> bool:
-        return mixin_hasattr(__o, __name, self.gc)
+        return self.mixintools.hasattr(__o, __name, self.gc)
 
     def match_at(self) -> None:
         if self.at == None:
@@ -145,7 +152,7 @@ class MixinBase:
         try:
             self.configs = getConfigs(mixinmethod)
         except:
-            _freeze_action.append({"init":self.init,"arg":(mixinmethod,)})
+            _freeze_action.append({"init": self.init, "arg": (mixinmethod,)})
             return mixinmethod
         self.mixinmethod = mixinmethod
         if self.method == None:
@@ -160,47 +167,81 @@ class MixinBase:
         return mixinmethod
 
     def cast(
-        subself, at: At, method: Union[str, MethodType, None] = None, gc: bool = None
+        subself,
+        at: At,
+        method: Union[str, MethodType, None] = None,
+        gc: bool = None,
+        mixintools: MixinTools = MixinTools(),
     ) -> Callable[[MethodType], MethodType]:
-        return subself().new(at, method, gc).init
+        return subself().new(at, method, gc, mixintools).init
 
     def new(
-        self, at: At, method: Union[str, MethodType, None] = None, gc: bool = None
+        self,
+        at: At,
+        method: Union[str, MethodType, None] = None,
+        gc: bool = None,
+        mixintools: MixinTools = MixinTools(),
     ) -> Self:
         self.at = at
         self.method = method
         self.gc = gc
+        self.mixintools = mixintools
         return self
-    
-class MethodGlue:pass
+
+
+class MethodGlue:
+    pass
+
 
 class Accessor(MixinBase):
     def mixin(self) -> None:
-        property_name="_%s%s" % (self.configs.mixincls.__name__,self.method)
-        pre=[
-            self.mixin_setattr(t, property_name, lambda _:mixin_getattr(_, "_%s%s" % (t.__name__, self.method)))
+        property_name = "_%s%s" % (self.configs.mixincls.__name__, self.method)
+        pre = [
+            self.mixin_setattr(
+                t,
+                property_name,
+                lambda _: mixin_getattr(_, "_%s%s" % (t.__name__, self.method)),
+            )
             for t in self.configs.target
         ]
-        warp=[
-            self.mixin_setattr(t, property_name, property(self.mixin_getattr(t,property_name)))
+        warp = [
+            self.mixin_setattr(
+                t, property_name, property(self.mixin_getattr(t, property_name))
+            )
             for t in self.configs.target
         ]
-        return [pre,warp]
-    
+        return [pre, warp]
+
     @staticmethod
-    def withValue(property: Union[str, MethodType, None] = None, gc: bool = None):
-        return Accessor.cast(Accessor, None, property, gc)
+    def withValue(
+        method: Union[str, MethodType, None] = None,
+        gc: bool = None,
+        mixintools: MixinTools = MixinTools(),
+    ):
+        return Accessor.cast(Accessor, None, method, gc, mixintools)
+
 
 class Inject(MixinBase):
     @staticmethod
-    def withValue(at: At, method: Union[str, MethodType, None] = None, gc: bool = None):
-        return Inject.cast(Inject, at, method, gc)
+    def withValue(
+        at: At,
+        method: Union[str, MethodType, None] = None,
+        gc: bool = None,
+        mixintools: MixinTools = MixinTools(),
+    ):
+        return Inject.cast(Inject, at, method, gc, mixintools)
 
 
 class Redirect(MixinBase):
     @staticmethod
-    def withValue(at: At, method: Union[str, MethodType, None] = None, gc: bool = None):
-        return Redirect.cast(Redirect, at, method, gc)
+    def withValue(
+        at: At,
+        method: Union[str, MethodType, None] = None,
+        gc: bool = None,
+        mixintools: MixinTools = MixinTools(),
+    ):
+        return Redirect.cast(Redirect, at, method, gc, mixintools)
+
 
 class OverWrite(MixinBase):
     def mixin(self) -> None:
@@ -210,5 +251,9 @@ class OverWrite(MixinBase):
         ]
 
     @staticmethod
-    def withValue(method: Union[str, MethodType, None] = None, gc: bool = None):
-        return OverWrite.cast(OverWrite, None, method, gc)
+    def withValue(
+        method: Union[str, MethodType, None] = None,
+        gc: bool = None,
+        mixintools: MixinTools = MixinTools(),
+    ):
+        return OverWrite.cast(OverWrite, None, method, gc, mixintools)
