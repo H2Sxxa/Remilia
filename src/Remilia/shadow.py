@@ -7,7 +7,6 @@ from .mixin import MixinBase, MixinTools
 from .base.exceptions import ExistedObjectError, NoSuchMethodError
 from .signs import Signs
 
-SHADOW_SELF = "__shadowaccssor_self__"
 SHADOW_MAP = "__shadowmethod_map__"
 
 EmptyType = _empty
