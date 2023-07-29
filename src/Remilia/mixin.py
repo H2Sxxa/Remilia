@@ -100,6 +100,7 @@ class MixinTools(BaseModel):
     hasattr: Callable = mixin_hasattr
     delattr: Callable = mixin_delattr
 
+
 class MixinCallable(Callable):
     @property
     def __mixin_configs__(self) -> List[Type]:
@@ -210,75 +211,84 @@ class MethodGlue:
 
 
 class CodeOperator:
-    def __init__(self,method:Callable,completion:bool=True) -> None:
-        self.codes=list(getsourcelines(method)[0])
-        self.name=method.__name__
-        self.base_indent=self.get_indent(self.codes[0]) * " "
-        self.extra_indent=self.get_indent(self.codes[1]) * " "
-        self.completion=completion
-    
-    def completion_code(self,code:str) -> str:
+    def __init__(self, method: Callable, completion: bool = True) -> None:
+        self.codes = list(getsourcelines(method)[0])
+        self.name = method.__name__
+        self.base_indent = self.get_indent(self.codes[0]) * " "
+        self.extra_indent = self.get_indent(self.codes[1]) * " "
+        self.completion = completion
+
+    def completion_code(self, code: str) -> str:
         if self.completion:
-            return "%s%s\n" % (self.extra_indent,code)
+            return "%s%s\n" % (self.extra_indent, code)
         else:
             return code
-    
-    def insert(self,line:int,code:str) -> Self:
-        self.codes.insert(line,self.completion_code(code))
+
+    def insert(self, line: int, code: str) -> Self:
+        self.codes.insert(line, self.completion_code(code))
         return self
-    
-    def insertlines(self,line:int,codes:List[str]) -> Self:
+
+    def insertlines(self, line: int, codes: List[str]) -> Self:
         for code in codes:
-            self.codes.insert(line,self.completion_code(code))
-            line+=1
+            self.codes.insert(line, self.completion_code(code))
+            line += 1
         return self
-    
-    def insert_head(self,code:str) -> Self:
-        self.codes.insert(1,self.completion_code(code))
+
+    def insert_head(self, code: str) -> Self:
+        self.codes.insert(1, self.completion_code(code))
         return self
-    
-    def insert_end(self,code:str) -> Self:
-        self.codes.insert(-1,self.completion_code(code))
+
+    def insertlines_head(self, codes: List[str]) -> Self:
+        self.insertlines(1, codes)
         return self
-    
-    def replace(self,line:int,code:str) -> Self:
+
+    def insert_end(self, code: str) -> Self:
+        self.codes.insert(-1, self.completion_code(code))
+        return self
+
+    def insertlines_end(self, codes: List[str]) -> Self:
+        self.extend([self.completion_code(code) for code in codes])
+        return self
+
+    def replace(self, line: int, code: str) -> Self:
         self.codes[line] = self.completion_code(code)
         return self
-    
-    def append(self,code:str) -> Self:
+
+    def append(self, code: str) -> Self:
         self.codes.append(self.completion_code(code))
         return self
 
-    def extend(self,codes:List[str]) -> Self:
-        self.codes.extend([self.completion_code(code) for code in codes])
-        return self
-    
     @staticmethod
-    def get_indent(string:str) -> int:
-        num=0
+    def get_indent(string: str) -> int:
+        num = 0
         for char in string:
             if char == " ":
-                num+=1
+                num += 1
             else:
                 return num
         return num
-    
+
     @staticmethod
-    def codesformat(codes:List[str]) -> List[str]:
-        extra_indent=CodeOperator.get_indent(codes[1]) * " "
+    def codesformat(codes: List[str]) -> List[str]:
+        extra_indent = CodeOperator.get_indent(codes[1]) * " "
         codes.pop(0)
-        return [code.replace(extra_indent,"",1) for code in codes]
+        return [code.replace(extra_indent, "", 1) for code in codes]
+
     @staticmethod
-    def getCodelinesFromCallable(method:Callable) -> List[str]:
+    def getCodelinesFromCallable(method: Callable) -> List[str]:
         return CodeOperator.codesformat(list(getsourcelines(method)[0]))
-    
+
     @staticmethod
-    def getCodeFromCallable(method:Callable) -> str:
+    def getCodeFromCallable(method: Callable) -> str:
         return "".join(CodeOperator.getCodelinesFromCallable(method))
-    
-    def export(self,namespace:dict={}) -> Callable:
-        exec("".join([code.replace(self.base_indent,"",1) for code in self.codes]),namespace)
+
+    def export(self, namespace: dict = {}) -> Callable:
+        exec(
+            "".join([code.replace(self.base_indent, "", 1) for code in self.codes]),
+            namespace,
+        )
         return namespace[self.name]
+
 
 class Accessor(MixinBase):
     def mixin(self) -> None:
