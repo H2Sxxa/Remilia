@@ -18,7 +18,6 @@ class At(Enum):
     AFTER_RETURN = "mixin_after_return"
 
     INJECT_INSERT = "mixin_inject_insert"
-    INJECT_OVERWRITE = "mixin_inject_overwrite"
 
     DEFAULT = "mixin"
 
@@ -140,11 +139,7 @@ class MixinBase:
     @abstractmethod
     def mixin_inject_insert(self) -> None:
         ...
-        
-    @abstractmethod
-    def mixin_inject_overwrite(self) -> None:
-        ...
-        
+
     def mixin_getattr(self, __o: object, __name: str) -> Any:
         return self.mixintools.getattr(__o, __name, self.gc)
 
@@ -223,8 +218,16 @@ class CodeOperator:
         self.codes = list(getsourcelines(method)[0])
         self.name = method.__name__
         self.base_indent = self.get_indent(self.codes[0]) * " "
+        self.codes = self.commonformat(self.codes, self.base_indent)
         self.extra_indent = self.get_indent(self.codes[1]) * " "
         self.completion = completion
+
+    def poplines(self, *lines) -> Self:
+        add=0
+        for line in lines:
+            self.codes.pop(line-add)
+            add+=1
+        return self
 
     def completion_code(self, code: str) -> str:
         if self.completion:
@@ -267,6 +270,14 @@ class CodeOperator:
         return self
 
     @staticmethod
+    def commonformat(codes: List[str], base_indent: str):
+        return [
+            code
+            for code in [code.replace(base_indent, "", 1) for code in codes]
+            if code[0] != "@"
+        ]
+
+    @staticmethod
     def get_indent(string: str) -> int:
         num = 0
         for char in string:
@@ -278,13 +289,19 @@ class CodeOperator:
 
     @staticmethod
     def codesformat(codes: List[str]) -> List[str]:
+        base_indent = CodeOperator.get_indent(codes[0]) * " "
+        codes = CodeOperator.commonformat(codes, base_indent)
         extra_indent = CodeOperator.get_indent(codes[1]) * " "
         codes.pop(0)
         return [code.replace(extra_indent, "", 1) for code in codes]
 
     @staticmethod
+    def remove_unexpectlines(codes:List[str]):
+        return [code[:-1] if code[-2::] else code for code in codes]
+    
+    @staticmethod
     def getCodelinesFromCallable(method: Callable) -> List[str]:
-        return CodeOperator.codesformat(list(getsourcelines(method)[0]))
+        return CodeOperator.remove_unexpectlines(CodeOperator.codesformat(list(getsourcelines(method)[0])))
 
     @staticmethod
     def getCodeFromCallable(method: Callable) -> str:
@@ -292,7 +309,7 @@ class CodeOperator:
 
     def export(self, namespace: dict = {}) -> Callable:
         exec(
-            "".join([code.replace(self.base_indent, "", 1) for code in self.codes]),
+            "".join(self.codes),
             namespace,
         )
         return namespace[self.name]
@@ -329,19 +346,46 @@ class Accessor(MixinBase):
 
 
 class Inject(MixinBase):
-    line:int
-    namespace:Dict[str,object]
+    insertline: int
+    poplines: List[int]
+    namespace: Dict[str, object]
+
+    def mixin(self) -> None:
+        self.mixin_head()
+
     def mixin_head(self) -> None:
+        codes = CodeOperator.getCodelinesFromCallable(self.mixinmethod)
         for target in self.configs.target:
-            method=CodeOperator(getattr(target,self.method)).insertlines_head(CodeOperator.getCodelinesFromCallable(self.mixinmethod)).export(self.namespace)
-            self.mixin_setattr(target,self.method,method)
-    
+            method = (
+                CodeOperator(getattr(target, self.method))
+                .insertlines_head(codes)
+                .export(self.namespace)
+            )
+            self.mixin_setattr(target, self.method, method)
+
+    def mixin_inject_insert(self) -> None:
+        codes = CodeOperator.getCodelinesFromCallable(self.mixinmethod)
+        # numcodes = len(codes)
+        if self.insertline == None:
+            self.mixin_head()
+        if isinstance(self.poplines, int):
+            self.poplines = [self.poplines]
+        for target in self.configs.target:
+            method = (
+                CodeOperator(getattr(target, self.method))
+                .insertlines(self.insertline, codes)
+                .poplines(*[line for line in self.poplines])
+                .export(self.namespace)
+            )
+            self.mixin_setattr(target, self.method, method)
+
     @staticmethod
     def withValue(
         at: At,
         method: Union[str, MethodType, None] = None,
-        line: Union[None, int] = None,
-        namespace:Dict[str,object]={},
+        insertline: Union[None, int] = None,
+        poplines: Union[int, List[int]] = [],
+        namespace: Dict[str, object] = {},
         gc: bool = None,
         mixintools: MixinTools = MixinTools(),
     ):
@@ -349,7 +393,11 @@ class Inject(MixinBase):
         use line when at -> INJECT_ ...
 
         """
-        return Inject.cast(Inject, at, method, gc, mixintools).addkwargs(line=line,namespace=namespace).init
+        return (
+            Inject.cast(Inject, at, method, gc, mixintools)
+            .addkwargs(insertline=insertline, poplines=poplines, namespace=namespace)
+            .init
+        )
 
 
 class OverWrite(MixinBase):
