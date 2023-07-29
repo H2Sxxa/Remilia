@@ -17,9 +17,8 @@ class At(Enum):
     RETURN = "mixin_return"
     AFTER_RETURN = "mixin_after_return"
 
-    INJECT_BEFORE = "mixin_inject_after"
+    INJECT_INSERT = "mixin_inject_insert"
     INJECT_OVERWRITE = "mixin_inject_overwrite"
-    INJECT_AFTER = "mixin_inject_after"
 
     DEFAULT = "mixin"
 
@@ -138,6 +137,14 @@ class MixinBase:
     def mixin_after_return(self) -> None:
         ...
 
+    @abstractmethod
+    def mixin_inject_insert(self) -> None:
+        ...
+        
+    @abstractmethod
+    def mixin_inject_overwrite(self) -> None:
+        ...
+        
     def mixin_getattr(self, __o: object, __name: str) -> Any:
         return self.mixintools.getattr(__o, __name, self.gc)
 
@@ -153,12 +160,13 @@ class MixinBase:
     def match_at(self) -> None:
         if self.at == None:
             return self.mixin()
-        if not hasattr(self, self.at):
-            raise MixinError("%s not support %s" % (self, self.at))
+        if not hasattr(self, self.at.value):
+            raise MixinError("%s not support %s" % (self, self.at.name))
         else:
-            atmixin: MethodType = getattr(self, self.at)
-            if getattr(atmixin, "__isabstractmethod__") == True:
-                raise MixinError("%s not support %s" % (self, self.at))
+            atmixin: MethodType = getattr(self, self.at.value)
+            if hasattr(atmixin, "__isabstractmethod__"):
+                if getattr(atmixin, "__isabstractmethod__") == True:
+                    raise MixinError("%s not support %s" % (self, self.at.name))
             atmixin()
 
     def init(self, mixinmethod: MethodType):
@@ -180,7 +188,7 @@ class MixinBase:
         return mixinmethod
 
     def addkwargs(self, **kwargs):
-        [setattr(self, n, v) for n, v in kwargs]
+        [setattr(self, n, v) for n, v in kwargs.items()]
         return self
 
     def cast(
@@ -321,11 +329,19 @@ class Accessor(MixinBase):
 
 
 class Inject(MixinBase):
+    line:int
+    namespace:Dict[str,object]
+    def mixin_head(self) -> None:
+        for target in self.configs.target:
+            method=CodeOperator(getattr(target,self.method)).insertlines_head(CodeOperator.getCodelinesFromCallable(self.mixinmethod)).export(self.namespace)
+            self.mixin_setattr(target,self.method,method)
+    
     @staticmethod
     def withValue(
         at: At,
         method: Union[str, MethodType, None] = None,
         line: Union[None, int] = None,
+        namespace:Dict[str,object]={},
         gc: bool = None,
         mixintools: MixinTools = MixinTools(),
     ):
@@ -333,7 +349,7 @@ class Inject(MixinBase):
         use line when at -> INJECT_ ...
 
         """
-        return Inject.cast(Inject, at, method, gc, mixintools).addkwargs(line=line).init
+        return Inject.cast(Inject, at, method, gc, mixintools).addkwargs(line=line,namespace=namespace).init
 
 
 class OverWrite(MixinBase):
