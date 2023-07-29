@@ -3,6 +3,7 @@ from abc import abstractmethod
 from enum import Enum
 from types import MethodType
 from typing import Any, Dict, List, Type, Union, Callable
+from inspect import getsourcelines
 from typing_extensions import Self
 from pydantic import BaseModel
 
@@ -11,11 +12,15 @@ from .base.exceptions import MixinError
 
 
 class At(Enum):
-    BEFORE_INVOKE = "mixin_before_invoke"
     INVOKE = "mixin_invoke"
     HEAD = "mixin_head"
     RETURN = "mixin_return"
     AFTER_RETURN = "mixin_after_return"
+
+    INJECT_BEFORE = "mixin_inject_after"
+    INJECT_OVERWRITE = "mixin_inject_overwrite"
+    INJECT_AFTER = "mixin_inject_after"
+
     DEFAULT = "mixin"
 
 
@@ -29,6 +34,13 @@ def mixin_getattr(__o: object, __name: str, __gc=False) -> Any:
         return get_referents(__o.__dict__)[0][__name]
     else:
         return getattr(__o, __name)
+
+
+def mixin_delattr(__o: object, __name: str, __gc=False) -> None:
+    if __gc:
+        get_referents(__o.__dict__)[0].pop(__name)
+    else:
+        delattr(__o, __name)
 
 
 def mixin_setattr(__o: object, __name: str, __value: Any, __gc=False) -> None:
@@ -71,6 +83,7 @@ class Mixin:
                 self.debuginfo.append(e)
         for fa in _freeze_action:
             fa["init"](*fa["arg"])
+        _freeze_action.clear()
         return mixincls
 
 
@@ -85,7 +98,7 @@ class MixinTools(BaseModel):
     getattr: Callable = mixin_getattr
     setattr: Callable = mixin_setattr
     hasattr: Callable = mixin_hasattr
-
+    delattr: Callable = mixin_delattr
 
 class MixinCallable(Callable):
     @property
@@ -109,10 +122,6 @@ class MixinBase:
         ...
 
     @abstractmethod
-    def mixin_before_invoke(self) -> None:
-        ...
-
-    @abstractmethod
     def mixin_invoke(self) -> None:
         ...
 
@@ -133,6 +142,9 @@ class MixinBase:
 
     def mixin_setattr(self, __o: object, __name: str, __value: Any) -> None:
         return self.mixintools.setattr(__o, __name, __value, self.gc)
+
+    def mixin_delattr(self, __o: object, __name: str, __value: Any) -> None:
+        return self.mixintools.delattr(__o, __name, __value, self.gc)
 
     def mixin_hasattr(self, __o: object, __name: str) -> bool:
         return self.mixintools.hasattr(__o, __name, self.gc)
@@ -166,14 +178,18 @@ class MixinBase:
         self.match_at()
         return mixinmethod
 
+    def addkwargs(self, **kwargs):
+        [setattr(self, n, v) for n, v in kwargs]
+        return self
+
     def cast(
         subself,
         at: At,
         method: Union[str, MethodType, None] = None,
         gc: bool = None,
         mixintools: MixinTools = MixinTools(),
-    ) -> Callable[[MethodType], MethodType]:
-        return subself().new(at, method, gc, mixintools).init
+    ) -> Self:
+        return subself().new(at, method, gc, mixintools)
 
     def new(
         self,
@@ -193,6 +209,77 @@ class MethodGlue:
     pass
 
 
+class CodeOperator:
+    def __init__(self,method:Callable,completion:bool=True) -> None:
+        self.codes=list(getsourcelines(method)[0])
+        self.name=method.__name__
+        self.base_indent=self.get_indent(self.codes[0]) * " "
+        self.extra_indent=self.get_indent(self.codes[1]) * " "
+        self.completion=completion
+    
+    def completion_code(self,code:str) -> str:
+        if self.completion:
+            return "%s%s\n" % (self.extra_indent,code)
+        else:
+            return code
+    
+    def insert(self,line:int,code:str) -> Self:
+        self.codes.insert(line,self.completion_code(code))
+        return self
+    
+    def insertlines(self,line:int,codes:List[str]) -> Self:
+        for code in codes:
+            self.codes.insert(line,self.completion_code(code))
+            line+=1
+        return self
+    
+    def insert_head(self,code:str) -> Self:
+        self.codes.insert(1,self.completion_code(code))
+        return self
+    
+    def insert_end(self,code:str) -> Self:
+        self.codes.insert(-1,self.completion_code(code))
+        return self
+    
+    def replace(self,line:int,code:str) -> Self:
+        self.codes[line] = self.completion_code(code)
+        return self
+    
+    def append(self,code:str) -> Self:
+        self.codes.append(self.completion_code(code))
+        return self
+
+    def extend(self,codes:List[str]) -> Self:
+        self.codes.extend([self.completion_code(code) for code in codes])
+        return self
+    
+    @staticmethod
+    def get_indent(string:str) -> int:
+        num=0
+        for char in string:
+            if char == " ":
+                num+=1
+            else:
+                return num
+        return num
+    
+    @staticmethod
+    def codesformat(codes:List[str]) -> List[str]:
+        extra_indent=CodeOperator.get_indent(codes[1]) * " "
+        codes.pop(0)
+        return [code.replace(extra_indent,"",1) for code in codes]
+    @staticmethod
+    def getCodelinesFromCallable(method:Callable) -> List[str]:
+        return CodeOperator.codesformat(list(getsourcelines(method)[0]))
+    
+    @staticmethod
+    def getCodeFromCallable(method:Callable) -> str:
+        return "".join(CodeOperator.getCodelinesFromCallable(method))
+    
+    def export(self,namespace:dict={}) -> Callable:
+        exec("".join([code.replace(self.base_indent,"",1) for code in self.codes]),namespace)
+        return namespace[self.name]
+
 class Accessor(MixinBase):
     def mixin(self) -> None:
         property_name = "_%s%s" % (self.configs.mixincls.__name__, self.method)
@@ -200,7 +287,9 @@ class Accessor(MixinBase):
             self.mixin_setattr(
                 t,
                 property_name,
-                lambda _: mixin_getattr(_, "_%s%s" % (_.__class__.__name__, self.method)),
+                lambda _: mixin_getattr(
+                    _, "_%s%s" % (_.__class__.__name__, self.method)
+                ),
             )
             for t in self.configs.target
         ]
@@ -218,7 +307,7 @@ class Accessor(MixinBase):
         gc: bool = None,
         mixintools: MixinTools = MixinTools(),
     ):
-        return Accessor.cast(Accessor, None, method, gc, mixintools)
+        return Accessor.cast(Accessor, None, method, gc, mixintools).init
 
 
 class Inject(MixinBase):
@@ -226,21 +315,15 @@ class Inject(MixinBase):
     def withValue(
         at: At,
         method: Union[str, MethodType, None] = None,
+        line: Union[None, int] = None,
         gc: bool = None,
         mixintools: MixinTools = MixinTools(),
     ):
-        return Inject.cast(Inject, at, method, gc, mixintools)
+        """
+        use line when at -> INJECT_ ...
 
-
-class Redirect(MixinBase):
-    @staticmethod
-    def withValue(
-        at: At,
-        method: Union[str, MethodType, None] = None,
-        gc: bool = None,
-        mixintools: MixinTools = MixinTools(),
-    ):
-        return Redirect.cast(Redirect, at, method, gc, mixintools)
+        """
+        return Inject.cast(Inject, at, method, gc, mixintools).addkwargs(line=line).init
 
 
 class OverWrite(MixinBase):
@@ -256,4 +339,4 @@ class OverWrite(MixinBase):
         gc: bool = None,
         mixintools: MixinTools = MixinTools(),
     ):
-        return OverWrite.cast(OverWrite, None, method, gc, mixintools)
+        return OverWrite.cast(OverWrite, None, method, gc, mixintools).init
