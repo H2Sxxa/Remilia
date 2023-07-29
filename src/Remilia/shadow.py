@@ -114,10 +114,13 @@ class ShadowInvoker:
 
 
 class ShadowAccessor:
-    def __init__(self, cls: Type) -> None:
+    def __init__(self, cls: Type,force=False) -> None:
         self.cls = cls
-
-    def setAccessible(self, name: str, force=False) -> None:
+        self.force=force
+        
+    def setAccessible(self, name: str, force=None) -> None:
+        if force == None:
+            force=self.force
         if not force:
             if hasattr(self.cls, name):
                 raise ExistedObjectError(
@@ -127,3 +130,6 @@ class ShadowAccessor:
             self.cls, name, lambda _: getattr(_, "_%s%s" % (_.__class__.__name__, name))
         )
         setattr(self.cls, name, property(getattr(self.cls, name)))
+
+    def Accessor(self,method:Callable):
+        self.setAccessible(method.__name__)

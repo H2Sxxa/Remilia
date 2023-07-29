@@ -7,7 +7,7 @@ from inspect import getsourcelines
 from typing_extensions import Self
 from pydantic import BaseModel
 
-
+from .shadow import ShadowAccessor
 from .base.exceptions import MixinError
 
 
@@ -223,10 +223,10 @@ class CodeOperator:
         self.completion = completion
 
     def poplines(self, *lines) -> Self:
-        add=0
+        add = 0
         for line in lines:
-            self.codes.pop(line-add)
-            add+=1
+            self.codes.pop(line - add)
+            add += 1
         return self
 
     def completion_code(self, code: str) -> str:
@@ -296,12 +296,14 @@ class CodeOperator:
         return [code.replace(extra_indent, "", 1) for code in codes]
 
     @staticmethod
-    def remove_unexpectlines(codes:List[str]):
+    def remove_unexpectlines(codes: List[str]):
         return [code[:-1] if code[-2::] else code for code in codes]
-    
+
     @staticmethod
     def getCodelinesFromCallable(method: Callable) -> List[str]:
-        return CodeOperator.remove_unexpectlines(CodeOperator.codesformat(list(getsourcelines(method)[0])))
+        return CodeOperator.remove_unexpectlines(
+            CodeOperator.codesformat(list(getsourcelines(method)[0]))
+        )
 
     @staticmethod
     def getCodeFromCallable(method: Callable) -> str:
@@ -318,7 +320,7 @@ class CodeOperator:
 class Accessor(MixinBase):
     def mixin(self) -> None:
         property_name = "_%s%s" % (self.configs.mixincls.__name__, self.method)
-        pre = [
+        for t in self.configs.target:
             self.mixin_setattr(
                 t,
                 property_name,
@@ -326,15 +328,19 @@ class Accessor(MixinBase):
                     _, "_%s%s" % (_.__class__.__name__, self.method)
                 ),
             )
-            for t in self.configs.target
-        ]
-        warp = [
+            self.mixin_setattr(
+                t,
+                self.method,
+                lambda _: mixin_getattr(
+                    _, "_%s%s" % (_.__class__.__name__, self.method)
+                ),
+            )
             self.mixin_setattr(
                 t, property_name, property(self.mixin_getattr(t, property_name))
             )
-            for t in self.configs.target
-        ]
-        return [pre, warp]
+            self.mixin_setattr(
+                t, self.method, property(self.mixin_getattr(t, self.method))
+            )
 
     @staticmethod
     def withValue(
@@ -389,13 +395,13 @@ class Inject(MixinBase):
         gc: bool = None,
         mixintools: MixinTools = MixinTools(),
     ):
-        """
-        use line when at -> INJECT_ ...
-
-        """
         return (
             Inject.cast(Inject, at, method, gc, mixintools)
-            .addkwargs(insertline=insertline, poplines=poplines, namespace=namespace)
+            .addkwargs(
+                insertline=insertline,
+                poplines=poplines,
+                namespace=namespace,
+            )
             .init
         )
 
