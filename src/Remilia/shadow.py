@@ -26,9 +26,19 @@ class Shadow(MixinBase):
             shadowmap = self.mixin_getattr(t_cls, SHADOW_MAP)
             if not shadowmap.__contains__(self.method):
                 shadowmap.update({self.method: dict()})
+                if self.mixin_hasattr(t_cls, self.method):
+                    shadowmap.get(self.method).update(
+                        {
+                            self.mixin_getattr(
+                                t_cls, self.method
+                            ): Signs.getParasAsType(
+                                self.mixin_getattr(t_cls, self.method)
+                            )
+                        }
+                    )
             while True:
                 tmpname = self.shadowName
-                if not shadowmap.get(self.method).__contains__(tmpname):
+                if not self.mixin_hasattr(t_cls, tmpname):
                     self.mixin_setattr(t_cls, tmpname, self.mixinmethod)
                     shadowmap.get(self.method).update(
                         {
@@ -56,9 +66,12 @@ class ShadowInvoker:
     def __init__(self, cls: Type) -> None:
         self.cls = cls
 
+    def getShadowMap(self) -> Dict:
+        return getattr(self.cls, SHADOW_MAP)
+
     def findAllWithType(self, paratype: List[object]) -> List[MethodType]:
         shadowmap: Dict[str, Dict[MethodType, List]]
-        shadowmap = getattr(self.cls, "__shadowmethod_map__")
+        shadowmap = getattr(self.cls, SHADOW_MAP)
         result = []
         for nvmap in [v for _, v in shadowmap.items()]:
             result.extend([n for n, v in nvmap.items() if v == paratype])
@@ -76,7 +89,7 @@ class ShadowInvoker:
         self, method: Union[str, MethodType], paratype: List[object]
     ) -> List[MethodType]:
         shadowmap: Dict[str, Dict[MethodType, List]]
-        shadowmap = getattr(self.cls, "__shadowmethod_map__")
+        shadowmap = getattr(self.cls, SHADOW_MAP)
         if not issubclass(method.__class__, str):
             methodN = method.__name__
         else:
