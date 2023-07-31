@@ -283,6 +283,7 @@ class MixinBase:
 
 
 class EnumCOChar(Enum):
+    EMPTY = ""
     SPACE = " "
     SPACE4 = "    "
     SPACE8 = "        "
@@ -316,7 +317,7 @@ class CodeOperator:
     def getsourcelines(__obj: object) -> List[str]:
         fullname = "%s.%s" % (__obj.__module__, __obj.__qualname__)
         if _freeze_corobject.__contains__(fullname):
-            return [_freeze_corobject[fullname],len(_freeze_corobject[fullname])]
+            return [_freeze_corobject[fullname], len(_freeze_corobject[fullname])]
         return getsourcelines(__obj)
 
     def poplines(self, *lines) -> Self:
@@ -375,10 +376,9 @@ class CodeOperator:
                 exclude_codes.append(code)
             else:
                 break
-            
+
         codes = [code for code in codes if code not in exclude_codes]
-        
-        
+
         return [
             code
             for code in [code.replace(base_indent, "", 1) for code in codes]
@@ -419,10 +419,10 @@ class CodeOperator:
 
     def coc_translate(self, code: str):
         for name, coc in _COCS.items():
-            symbol0 = "#!WRAPCOC(%s);" % name
+            symbol0 = "#@@>"
             symbol1 = "WRAPCOC(%s);" % name
-            
-            code = code.replace(symbol0, coc.value).replace(symbol1,coc.value)
+
+            code = code.replace(symbol0, coc.value).replace(symbol1, coc.value)
         return code
 
     def export(self, namespace: dict = {}) -> Callable:
