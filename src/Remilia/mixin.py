@@ -54,20 +54,59 @@ def mixin_hasattr(__o: object, __name: str, __gc=False) -> None:
         return hasattr(__o, __name)
 
 
+class Ancestor:
+    target: List[Type]
+    ancestor_namespace: Dict[str, object]
+    ancestor_reserve: bool
+    ancestor_exclude: List[Type]
+
+    def __init__(
+        self,
+        target: Union[List[Type], Type],
+        ancestor_exclude: Union[List[Type], Type] = [],
+        ancestor_reserve: bool = False,
+        ancestor_namespace: Dict[str, Type] = {},
+    ) -> None:
+        if not isinstance(target, list):
+            self.target = [target]
+        else:
+            self.target = target
+        if not isinstance(ancestor_exclude, list):
+            self.ancestor_exclude = [ancestor_exclude]
+        else:
+            self.ancestor_exclude = ancestor_exclude
+        self.ancestor_reserve = ancestor_reserve
+        self.ancestor_namespace = ancestor_namespace
+
+    def __call__(self, mixincls) -> Type:
+        for t in self.target:
+            t: object
+            if t.__bases__ == (object,):
+                t = type(t.__name__, (mixincls,), dict(t.__dict__))
+            else:
+                rebuild_bases = tuple(
+                    [cls for cls in t.__bases__ if cls not in self.ancestor_exclude]
+                )
+
+                if self.ancestor_reserve:
+                    t.__bases__ = (
+                        mixincls,
+                        *rebuild_bases,
+                    )
+                else:
+                    t.__bases__ = (*rebuild_bases, mixincls)
+            self.ancestor_namespace.update({t.__name__: t})
+        return mixincls
+
+
 class Mixin:
     target: List[Type]
     debuginfo: List[Exception]
-    ancestor: bool
-    ancestor_namespace: Dict[str, object]
-    ancestor_reserve: bool
     gc: bool
 
     def __init__(
         self,
         target: Union[List[Type], Type],
-        ancestor: bool = False,
-        ancestor_reserve: bool = False,
-        ancestor_namespace: Dict[str, Type] = {},
         gc: bool = False,
     ) -> None:
         if not isinstance(target, list):
@@ -75,30 +114,12 @@ class Mixin:
         else:
             self.target = target
         self.debuginfo = []
-        self.ancestor = ancestor
-        self.ancestor_reserve = ancestor_reserve
-        self.ancestor_namespace = ancestor_namespace
         self.gc = gc
 
     def __call__(self, mixincls: Type) -> Type:
         self.configs = MixinConfigs(
             target=self.target, mixincls=mixincls, mixin=self, gc=self.gc
         )
-        if self.ancestor:
-            for t in self.target:
-                t: object
-                if t.__bases__ == (object,):
-                    t = type(t.__name__, (mixincls,), dict(t.__dict__))
-                else:
-                    if self.ancestor_reserve:
-                        t.__bases__ = (
-                            mixincls,
-                            *t.__bases__,
-                        )
-                    else:
-                        t.__bases__ = (*t.__bases__, mixincls)
-                self.ancestor_namespace.update({t.__name__: t})
-            return mixincls
         for mname in dir(mixincls):
             try:
                 obj = getattr(mixincls, mname)
