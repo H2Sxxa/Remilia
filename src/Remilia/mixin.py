@@ -419,7 +419,7 @@ class CodeOperator:
 
     def coc_translate(self, code: str):
         for name, coc in _COCS.items():
-            symbol0 = "#@@>"
+            symbol0 = "#!@@>"
             symbol1 = "WRAPCOC(%s);" % name
 
             code = code.replace(symbol0, coc.value).replace(symbol1, coc.value)
