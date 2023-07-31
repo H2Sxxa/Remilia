@@ -508,6 +508,9 @@ class Inject(MixinBase):
         gc: bool = None,
         mixintools: MixinTools = MixinTools(),
     ):
+        if not isinstance(poplines, Iterable):
+            poplines = [poplines]
+
         return (
             Inject.cast(Inject, at, method, gc, mixintools)
             .addkwargs(
