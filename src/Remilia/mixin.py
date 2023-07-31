@@ -57,20 +57,48 @@ def mixin_hasattr(__o: object, __name: str, __gc=False) -> None:
 class Mixin:
     target: List[Type]
     debuginfo: List[Exception]
+    ancestor: bool
+    ancestor_namespace: Dict[str, object]
+    ancestor_reserve: bool
     gc: bool
 
-    def __init__(self, target: Union[List[Type], Type], gc: bool = False) -> None:
+    def __init__(
+        self,
+        target: Union[List[Type], Type],
+        ancestor: bool = False,
+        ancestor_reserve: bool = False,
+        ancestor_namespace: Dict[str, Type] = {},
+        gc: bool = False,
+    ) -> None:
         if not isinstance(target, list):
             self.target = [target]
         else:
             self.target = target
         self.debuginfo = []
+        self.ancestor = ancestor
+        self.ancestor_reserve = ancestor_reserve
+        self.ancestor_namespace = ancestor_namespace
         self.gc = gc
 
     def __call__(self, mixincls: Type) -> Type:
         self.configs = MixinConfigs(
             target=self.target, mixincls=mixincls, mixin=self, gc=self.gc
         )
+        if self.ancestor:
+            for t in self.target:
+                t: object
+                if t.__bases__ == (object,):
+                    t = type(t.__name__, (mixincls,), dict(t.__dict__))
+                else:
+                    if self.ancestor_reserve:
+                        t.__bases__ = (
+                            mixincls,
+                            *t.__bases__,
+                        )
+                    else:
+                        t.__bases__ = (*t.__bases__, mixincls)
+                self.ancestor_namespace.update({t.__name__: t})
+            return mixincls
         for mname in dir(mixincls):
             try:
                 obj = getattr(mixincls, mname)
@@ -335,8 +363,8 @@ class Glue(MixinBase):
             self.rawmethod: MethodType = self.mixin_getattr(t, self.method)
 
             def glue_invoke(*args, **kwargs):
-                result=self.rawmethod(*args, **kwargs)
-                return self.mixinmethod(args[0],result)
+                result = self.rawmethod(*args, **kwargs)
+                return self.mixinmethod(args[0], result)
 
             self.mixin_setattr(t, self.method, glue_invoke)
 
@@ -456,3 +484,37 @@ class OverWrite(MixinBase):
         mixintools: MixinTools = MixinTools(),
     ):
         return OverWrite.cast(OverWrite, None, method, gc, mixintools).init
+
+
+class SubClassTracer:
+    tracelist: List[Type]
+
+    def __init__(self) -> None:
+        self.update()
+
+    def update(self) -> Self:
+        self.tracelist = object.__subclasses__()
+        return self
+
+    def fromName(self, part: str):
+        return [t for t in self.tracelist if part in t.__name__]
+
+    def fromNameFirst(self, part: str) -> Union[None, Type]:
+        for t in self.tracelist:
+            if part in t.__name__:
+                return t
+
+    def equalName(self, name: str) -> List[Type]:
+        return [t for t in self.tracelist if name == t.__name__]
+
+    def equalNameFirst(self, name: str) -> Union[None, Type]:
+        for t in self.tracelist:
+            if name == t.__name__:
+                return t
+
+
+__subtracer = SubClassTracer()
+
+
+def getSubClassTracer() -> SubClassTracer:
+    return __subtracer
