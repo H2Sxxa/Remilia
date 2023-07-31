@@ -295,7 +295,7 @@ for cocn in dir(EnumCOChar):
         _COCS.update({str(coc): coc})
 
 
-def WARPCOC(_: EnumCOChar):
+def WRAPCOC(_: EnumCOChar):
     ...
 
 
@@ -369,6 +369,16 @@ class CodeOperator:
 
     @staticmethod
     def commonformat(codes: List[str], base_indent: str):
+        exclude_codes = []
+        for code in codes:
+            if "def " not in code:
+                exclude_codes.append(code)
+            else:
+                break
+            
+        codes = [code for code in codes if code not in exclude_codes]
+        
+        
         return [
             code
             for code in [code.replace(base_indent, "", 1) for code in codes]
@@ -409,8 +419,10 @@ class CodeOperator:
 
     def coc_translate(self, code: str):
         for name, coc in _COCS.items():
-            symbol = "WARPCOC(%s);" % name
-            code = code.replace(symbol, coc.value)
+            symbol0 = "#!WRAPCOC(%s);" % name
+            symbol1 = "WRAPCOC(%s);" % name
+            
+            code = code.replace(symbol0, coc.value).replace(symbol1,coc.value)
         return code
 
     def export(self, namespace: dict = {}) -> Callable:
