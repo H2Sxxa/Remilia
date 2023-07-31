@@ -7,7 +7,8 @@ from inspect import getsourcelines
 from typing_extensions import Self
 from pydantic import BaseModel
 
-from .base.exceptions import MixinError
+from .log import get_logger
+from .base.exceptions import CodeOperatorError, MixinError
 
 
 class At(Enum):
@@ -25,6 +26,7 @@ class At(Enum):
 MIXIN_CONFIGS = "__mixin_configs__"
 
 _freeze_action: List[Dict[str, object]] = []
+_freeze_corobject: Dict[str, object] = {}
 
 
 def mixin_getattr(__o: object, __name: str, __gc=False) -> Any:
@@ -280,14 +282,42 @@ class MixinBase:
         return self
 
 
+class EnumCOChar(Enum):
+    SPACE = " "
+    SPACE4 = "    "
+    SPACE8 = "        "
+
+
+_COCS: Dict[str, EnumCOChar] = {}
+for cocn in dir(EnumCOChar):
+    coc = getattr(EnumCOChar, cocn)
+    if isinstance(coc, EnumCOChar):
+        _COCS.update({str(coc): coc})
+
+
+def WARPCOC(_: EnumCOChar):
+    ...
+
+
 class CodeOperator:
-    def __init__(self, method: Callable, completion: bool = True) -> None:
-        self.codes = list(getsourcelines(method)[0])
+    def __init__(
+        self, method: MethodType, completion: bool = True, debugmode: bool = False
+    ) -> None:
+        self.fullname = "%s.%s" % (method.__module__, method.__qualname__)
+        self.codes = list(CodeOperator.getsourcelines(method)[0])
         self.name = method.__name__
         self.base_indent = self.get_indent(self.codes[0]) * " "
         self.codes = self.commonformat(self.codes, self.base_indent)
         self.extra_indent = self.get_indent(self.codes[1]) * " "
         self.completion = completion
+        self.debugmode = debugmode
+
+    @staticmethod
+    def getsourcelines(__obj: object) -> List[str]:
+        fullname = "%s.%s" % (__obj.__module__, __obj.__qualname__)
+        if _freeze_corobject.__contains__(fullname):
+            return [_freeze_corobject[fullname],len(_freeze_corobject[fullname])]
+        return getsourcelines(__obj)
 
     def poplines(self, *lines) -> Self:
         add = 0
@@ -309,7 +339,8 @@ class CodeOperator:
     def insertlines(self, line: int, codes: List[str]) -> Self:
         for code in codes:
             self.codes.insert(line, self.completion_code(code))
-            line += 1
+            if line >= 0:
+                line += 1
         return self
 
     def insert_head(self, code: str) -> Self:
@@ -369,19 +400,43 @@ class CodeOperator:
     @staticmethod
     def getCodelinesFromCallable(method: Callable) -> List[str]:
         return CodeOperator.remove_unexpectlines(
-            CodeOperator.codesformat(list(getsourcelines(method)[0]))
+            CodeOperator.codesformat(list(CodeOperator.getsourcelines(method)[0]))
         )
 
     @staticmethod
     def getCodeFromCallable(method: Callable) -> str:
         return "".join(CodeOperator.getCodelinesFromCallable(method))
 
+    def coc_translate(self, code: str):
+        for name, coc in _COCS.items():
+            symbol = "WARPCOC(%s);" % name
+            code = code.replace(symbol, coc.value)
+        return code
+
     def export(self, namespace: dict = {}) -> Callable:
-        exec(
-            "".join(self.codes),
-            namespace,
-        )
-        return namespace[self.name]
+        bake_codes = [self.coc_translate(code) for code in self.codes]
+        code = "".join(bake_codes)
+        if self.debugmode:
+            logger = get_logger()
+            logger_level = logger.vlevel
+            logger.set_vlevel(10)
+            logger.warn(
+                "CodeOperator under debugmode , remove the 'debugmode = True' to close"
+            )
+            logger.info(bake_codes)
+
+            logger.info("\nexec code: \n %s" % (code))
+            logger.set_vlevel(logger_level)
+        try:
+            exec(
+                code,
+                namespace,
+            )
+            method = namespace[self.name]
+            _freeze_corobject.update({self.fullname: bake_codes})
+            return method
+        except Exception as e:
+            raise CodeOperatorError(e)
 
 
 class Glue(MixinBase):
@@ -457,6 +512,7 @@ class Inject(MixinBase):
     insertline: int
     poplines: List[int]
     namespace: Dict[str, object]
+    debugmode: bool
 
     def mixin(self) -> None:
         self.mixin_head()
@@ -465,22 +521,26 @@ class Inject(MixinBase):
         codes = CodeOperator.getCodelinesFromCallable(self.mixinmethod)
         for target in self.configs.target:
             method = (
-                CodeOperator(getattr(target, self.method))
+                CodeOperator(getattr(target, self.method), debugmode=self.debugmode)
                 .insertlines_head(codes)
                 .poplines(*[line for line in self.poplines])
                 .export(self.namespace)
             )
+            method.__qualname__ = "%s.%s" % (target.__name__, self.method)
+            method.__module__ = target.__module__
             self.mixin_setattr(target, self.method, method)
 
     def mixin_end(self) -> None:
         codes = CodeOperator.getCodelinesFromCallable(self.mixinmethod)
         for target in self.configs.target:
             method = (
-                CodeOperator(getattr(target, self.method))
+                CodeOperator(getattr(target, self.method), debugmode=self.debugmode)
                 .insertlines_end(codes)
                 .poplines(*[line for line in self.poplines])
                 .export(self.namespace)
             )
+            method.__qualname__ = "%s.%s" % (target.__name__, self.method)
+            method.__module__ = target.__module__
             self.mixin_setattr(target, self.method, method)
 
     def mixin_insert(self) -> None:
@@ -491,11 +551,13 @@ class Inject(MixinBase):
             self.poplines = [self.poplines]
         for target in self.configs.target:
             method = (
-                CodeOperator(getattr(target, self.method))
+                CodeOperator(getattr(target, self.method), debugmode=self.debugmode)
                 .insertlines(self.insertline, codes)
                 .poplines(*[line for line in self.poplines])
                 .export(self.namespace)
             )
+            method.__qualname__ = "%s.%s" % (target.__name__, self.method)
+            method.__module__ = target.__module__
             self.mixin_setattr(target, self.method, method)
 
     @staticmethod
@@ -505,6 +567,7 @@ class Inject(MixinBase):
         insertline: Union[None, int] = None,
         poplines: Union[int, List[int]] = [],
         namespace: Dict[str, object] = {},
+        debugmode: bool = False,
         gc: bool = None,
         mixintools: MixinTools = MixinTools(),
     ):
@@ -517,6 +580,7 @@ class Inject(MixinBase):
                 insertline=insertline,
                 poplines=poplines,
                 namespace=namespace,
+                debugmode=debugmode,
             )
             .init
         )
