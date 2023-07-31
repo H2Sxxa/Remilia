@@ -2,7 +2,7 @@ from gc import get_referents
 from abc import abstractmethod
 from enum import Enum
 from types import MethodType
-from typing import Any, Dict, List, Tuple, Type, Union, Callable
+from typing import Any, Dict, Iterable, List, Tuple, Type, Union, Callable
 from inspect import getsourcelines
 from typing_extensions import Self
 from pydantic import BaseModel
@@ -14,6 +14,7 @@ class At(Enum):
     # Inject stuff
     HEAD = "mixin_head"
     INSERT = "mixin_insert"
+    END = "mixin_end"
     # Glue
     INVOKE = "mixin_invoke"
     RETURN = "mixin_return"
@@ -56,27 +57,36 @@ def mixin_hasattr(__o: object, __name: str, __gc=False) -> None:
 
 class Ancestor:
     target: List[Type]
+    at: At
     ancestor_namespace: Dict[str, object]
-    ancestor_reserve: bool
     ancestor_exclude: List[Type]
 
     def __init__(
         self,
         target: Union[List[Type], Type],
+        ancestor_namespace: Union[List[Dict[str, Type]], Dict[str, Type]] = {},
         ancestor_exclude: Union[List[Type], Type] = [],
-        ancestor_reserve: bool = False,
-        ancestor_namespace: Dict[str, Type] = {},
+        at: At = At.END,
+        ancestor_hook: Callable[[List[Type]], Iterable] = lambda _: _,
     ) -> None:
-        if not isinstance(target, list):
+        if not isinstance(target, Iterable):
             self.target = [target]
         else:
             self.target = target
-        if not isinstance(ancestor_exclude, list):
+        if not isinstance(ancestor_exclude, Iterable):
             self.ancestor_exclude = [ancestor_exclude]
         else:
             self.ancestor_exclude = ancestor_exclude
-        self.ancestor_reserve = ancestor_reserve
-        self.ancestor_namespace = ancestor_namespace
+
+        if not isinstance(ancestor_namespace, Iterable) or isinstance(
+            ancestor_namespace, Dict
+        ):
+            self.ancestor_namespace = [ancestor_namespace]
+        else:
+            self.ancestor_namespace = ancestor_namespace
+
+        self.at = at
+        self.ancestor_hook = ancestor_hook
 
     def __call__(self, mixincls) -> Type:
         for t in self.target:
@@ -85,17 +95,20 @@ class Ancestor:
                 t = type(t.__name__, (mixincls,), dict(t.__dict__))
             else:
                 rebuild_bases = tuple(
-                    [cls for cls in t.__bases__ if cls not in self.ancestor_exclude]
+                    self.ancestor_hook(
+                        [cls for cls in t.__bases__ if cls not in self.ancestor_exclude]
+                    )
                 )
 
-                if self.ancestor_reserve:
+                if self.at == At.HEAD:
                     t.__bases__ = (
                         mixincls,
                         *rebuild_bases,
                     )
                 else:
                     t.__bases__ = (*rebuild_bases, mixincls)
-            self.ancestor_namespace.update({t.__name__: t})
+            for ans in self.ancestor_namespace:
+                ans.update({t.__name__: t})
         return mixincls
 
 
@@ -109,7 +122,7 @@ class Mixin:
         target: Union[List[Type], Type],
         gc: bool = False,
     ) -> None:
-        if not isinstance(target, list):
+        if not isinstance(target, Iterable):
             self.target = [target]
         else:
             self.target = target
@@ -179,6 +192,10 @@ class MixinBase:
 
     @abstractmethod
     def mixin_head(self) -> None:
+        ...
+
+    @abstractmethod
+    def mixin_end(self) -> None:
         ...
 
     @abstractmethod
@@ -308,7 +325,7 @@ class CodeOperator:
         return self
 
     def insertlines_end(self, codes: List[str]) -> Self:
-        self.extend([self.completion_code(code) for code in codes])
+        self.codes.extend([self.completion_code(code) for code in codes])
         return self
 
     def replace(self, line: int, code: str) -> Self:
@@ -450,13 +467,24 @@ class Inject(MixinBase):
             method = (
                 CodeOperator(getattr(target, self.method))
                 .insertlines_head(codes)
+                .poplines(*[line for line in self.poplines])
+                .export(self.namespace)
+            )
+            self.mixin_setattr(target, self.method, method)
+
+    def mixin_end(self) -> None:
+        codes = CodeOperator.getCodelinesFromCallable(self.mixinmethod)
+        for target in self.configs.target:
+            method = (
+                CodeOperator(getattr(target, self.method))
+                .insertlines_end(codes)
+                .poplines(*[line for line in self.poplines])
                 .export(self.namespace)
             )
             self.mixin_setattr(target, self.method, method)
 
     def mixin_insert(self) -> None:
         codes = CodeOperator.getCodelinesFromCallable(self.mixinmethod)
-        # numcodes = len(codes)
         if self.insertline == None:
             self.mixin_head()
         if isinstance(self.poplines, int):
@@ -507,7 +535,7 @@ class OverWrite(MixinBase):
         return OverWrite.cast(OverWrite, None, method, gc, mixintools).init
 
 
-class SubClassTracer:
+class ClassTracer:
     tracelist: List[Type]
 
     def __init__(self) -> None:
@@ -534,8 +562,8 @@ class SubClassTracer:
                 return t
 
 
-__subtracer = SubClassTracer()
+__subtracer = ClassTracer()
 
 
-def getSubClassTracer() -> SubClassTracer:
+def getClassTracer() -> ClassTracer:
     return __subtracer
