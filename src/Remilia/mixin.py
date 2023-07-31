@@ -418,11 +418,11 @@ class CodeOperator:
         return "".join(CodeOperator.getCodelinesFromCallable(method))
 
     def coc_translate(self, code: str):
+        code = code.replace("#!@@>", "")
         for name, coc in _COCS.items():
-            symbol0 = "#!@@>"
-            symbol1 = "WRAPCOC(%s);" % name
+            symbol = "WRAPCOC(%s);" % name
 
-            code = code.replace(symbol0, coc.value).replace(symbol1, coc.value)
+            code = code.replace(symbol, coc.value)
         return code
 
     def export(self, namespace: dict = {}) -> Callable:
