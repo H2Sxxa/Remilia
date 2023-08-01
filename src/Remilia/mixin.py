@@ -296,10 +296,6 @@ for cocn in dir(EnumCOChar):
         _COCS.update({str(coc): coc})
 
 
-def WRAPCOC(_: EnumCOChar):
-    ...
-
-
 class CodeOperator:
     def __init__(
         self, method: MethodType, completion: bool = True, debugmode: bool = False
@@ -420,7 +416,7 @@ class CodeOperator:
     def coc_translate(self, code: str):
         code = code.replace("#!@@>", "")
         for name, coc in _COCS.items():
-            symbol = "WRAPCOC(%s);" % name
+            symbol = "%s;" % name
 
             code = code.replace(symbol, coc.value)
         return code
@@ -571,6 +567,63 @@ class Inject(MixinBase):
             method.__qualname__ = "%s.%s" % (target.__name__, self.method)
             method.__module__ = target.__module__
             self.mixin_setattr(target, self.method, method)
+
+    def func_init(self, mixinmethod: Callable) -> Callable:
+        self.mixinmethod = mixinmethod
+        for cab in self.method:
+            codes = CodeOperator(cab, debugmode=self.debugmode)
+            if self.at == At.INSERT:
+                rebuild = (
+                    codes.insertlines(self.insertline, codes)
+                    .poplines(*[line for line in self.poplines])
+                    .export(self.namespace)
+                )
+            elif self.at == At.END:
+                rebuild = (
+                    codes.insertlines_end(
+                        CodeOperator.getCodelinesFromCallable(mixinmethod)
+                    )
+                    .poplines(*[line for line in self.poplines])
+                    .export(self.namespace)
+                )
+            else:
+                rebuild = (
+                    codes.insertlines_head(
+                        CodeOperator.getCodelinesFromCallable(mixinmethod)
+                    )
+                    .poplines(*[line for line in self.poplines])
+                    .export(self.namespace)
+                )
+            self.mixin_setattr(cab, "__code__", rebuild.__code__)
+        return mixinmethod
+
+    @staticmethod
+    def withFunc(
+        at: At,
+        func: Union[Callable, List[Callable]],
+        insertline: Union[None, int] = None,
+        poplines: Union[int, List[int]] = [],
+        namespace: Dict[str, object] = {},
+        debugmode: bool = False,
+        gc: bool = False,
+        mixintools: MixinTools = MixinTools(),
+    ):
+        if not isinstance(poplines, Iterable):
+            poplines = [poplines]
+
+        if not isinstance(func, Iterable):
+            func = [func]
+
+        return (
+            Inject.cast(Inject, at, func, gc, mixintools)
+            .addkwargs(
+                insertline=insertline,
+                poplines=poplines,
+                namespace=namespace,
+                debugmode=debugmode,
+            )
+            .func_init
+        )
 
     @staticmethod
     def withValue(
