@@ -284,6 +284,7 @@ class MixinBase:
 
 class EnumCOChar(Enum):
     EMPTY = ""
+    DELETELINE = "$DELETELINE"
     SPACE = " "
     SPACE4 = "    "
     SPACE8 = "        "
@@ -414,11 +415,15 @@ class CodeOperator:
         return "".join(CodeOperator.getCodelinesFromCallable(method))
 
     def coc_translate(self, code: str):
-        code = code.replace("#!@@>", "")
+        code = code.replace("#!", "")
         for name, coc in _COCS.items():
             symbol = "%s;" % name
-
-            code = code.replace(symbol, coc.value)
+            if coc == EnumCOChar.DELETELINE:
+                code = "\n".join(
+                    [fcode for fcode in code.split("\n") if symbol not in fcode]
+                )
+            else:
+                code = code.replace(symbol, coc.value)
         return code
 
     def export(self, namespace: dict = {}) -> Callable:
@@ -519,37 +524,78 @@ class Accessor(MixinBase):
 class Inject(MixinBase):
     insertline: int
     poplines: List[int]
+    insertfirst: bool
     namespace: Dict[str, object]
     debugmode: bool
 
     def mixin(self) -> None:
         self.mixin_head()
 
+    def getNameSpace(self, target: Any):
+        try:
+            return target.__module__.__dict__.update(self.namespace)
+        except:
+            return self.namespace
+
+    def doinsert(
+        self,
+        cor: CodeOperator,
+        insertuse: MethodType,
+        *insert_args,
+        **insert_kwargs,
+    ) -> CodeOperator:
+        if self.insertfirst:
+            cor = insertuse(
+                *insert_args,
+                **insert_kwargs,
+            )
+            cor.poplines(*[line for line in self.poplines])
+        else:
+            cor.poplines(*[line for line in self.poplines])
+            cor = insertuse(
+                *insert_args,
+                **insert_kwargs,
+            )
+        return cor
+
+    def rename_method(self, method: Callable, tomethod: Callable):
+        method.__qualname__ = tomethod.__qualname__
+        method.__module__ = tomethod.__module__
+        return method
+
     def mixin_head(self) -> None:
         codes = CodeOperator.getCodelinesFromCallable(self.mixinmethod)
         for target in self.configs.target:
-            method = (
-                CodeOperator(getattr(target, self.method), debugmode=self.debugmode)
-                .insertlines_head(codes)
-                .poplines(*[line for line in self.poplines])
-                .export(self.namespace)
+            self.namespace = self.getNameSpace(target)
+            cor = CodeOperator(
+                self.mixin_getattr(target, self.method), debugmode=self.debugmode
             )
-            method.__qualname__ = "%s.%s" % (target.__name__, self.method)
-            method.__module__ = target.__module__
-            self.mixin_setattr(target, self.method, method)
+            self.mixin_setattr(
+                target,
+                self.method,
+                self.rename_method(
+                    self.doinsert(cor, cor.insert_end, codes).export(self.namespace),
+                    self.mixin_getattr(target, self.method),
+                ),
+            )
 
     def mixin_end(self) -> None:
         codes = CodeOperator.getCodelinesFromCallable(self.mixinmethod)
         for target in self.configs.target:
-            method = (
-                CodeOperator(getattr(target, self.method), debugmode=self.debugmode)
-                .insertlines_end(codes)
-                .poplines(*[line for line in self.poplines])
-                .export(self.namespace)
+            self.namespace = self.getNameSpace(target)
+            cor = CodeOperator(
+                self.mixin_getattr(target, self.method), debugmode=self.debugmode
             )
-            method.__qualname__ = "%s.%s" % (target.__name__, self.method)
-            method.__module__ = target.__module__
-            self.mixin_setattr(target, self.method, method)
+            self.mixin_setattr(
+                target,
+                self.method,
+                self.rename_method(
+                    self.doinsert(cor, cor.insertlines_end, codes).export(
+                        self.namespace
+                    ),
+                    self.mixin_getattr(target, self.method),
+                ),
+            )
 
     def mixin_insert(self) -> None:
         codes = CodeOperator.getCodelinesFromCallable(self.mixinmethod)
@@ -558,41 +604,47 @@ class Inject(MixinBase):
         if isinstance(self.poplines, int):
             self.poplines = [self.poplines]
         for target in self.configs.target:
-            method = (
-                CodeOperator(getattr(target, self.method), debugmode=self.debugmode)
-                .insertlines(self.insertline, codes)
-                .poplines(*[line for line in self.poplines])
-                .export(self.namespace)
+            self.namespace = self.getNameSpace(target)
+            cor = CodeOperator(
+                self.mixin_getattr(target, self.method), debugmode=self.debugmode
             )
-            method.__qualname__ = "%s.%s" % (target.__name__, self.method)
-            method.__module__ = target.__module__
-            self.mixin_setattr(target, self.method, method)
+            self.mixin_setattr(
+                target,
+                self.method,
+                self.rename_method(
+                    self.doinsert(cor, cor.insertlines, self.insertline, codes).export(
+                        self.namespace
+                    ),
+                    self.mixin_getattr(target, self.method),
+                ),
+            )
 
     def func_init(self, mixinmethod: Callable) -> Callable:
         self.mixinmethod = mixinmethod
         for cab in self.method:
-            codes = CodeOperator(cab, debugmode=self.debugmode)
+            self.namespace = self.getNameSpace(cab)
+            codes = CodeOperator.getCodelinesFromCallable(mixinmethod)
+            cor = CodeOperator(cab, debugmode=self.debugmode)
             if self.at == At.INSERT:
-                rebuild = (
-                    codes.insertlines(self.insertline, codes)
-                    .poplines(*[line for line in self.poplines])
-                    .export(self.namespace)
+                rebuild = self.rename_method(
+                    self.doinsert(cor, cor.insertlines, self.insertline, codes).export(
+                        self.namespace
+                    ),
+                    cab,
                 )
             elif self.at == At.END:
-                rebuild = (
-                    codes.insertlines_end(
-                        CodeOperator.getCodelinesFromCallable(mixinmethod)
-                    )
-                    .poplines(*[line for line in self.poplines])
-                    .export(self.namespace)
+                rebuild = self.rename_method(
+                    self.doinsert(cor, cor.insertlines_end, codes).export(
+                        self.namespace
+                    ),
+                    cab,
                 )
             else:
-                rebuild = (
-                    codes.insertlines_head(
-                        CodeOperator.getCodelinesFromCallable(mixinmethod)
-                    )
-                    .poplines(*[line for line in self.poplines])
-                    .export(self.namespace)
+                rebuild = self.rename_method(
+                    self.doinsert(cor, cor.insertlines_head, codes).export(
+                        self.namespace
+                    ),
+                    cab,
                 )
             self.mixin_setattr(cab, "__code__", rebuild.__code__)
         return mixinmethod
@@ -603,6 +655,7 @@ class Inject(MixinBase):
         func: Union[Callable, List[Callable]],
         insertline: Union[None, int] = None,
         poplines: Union[int, List[int]] = [],
+        insertfirst: bool = True,
         namespace: Dict[str, object] = {},
         debugmode: bool = False,
         gc: bool = False,
@@ -619,6 +672,7 @@ class Inject(MixinBase):
             .addkwargs(
                 insertline=insertline,
                 poplines=poplines,
+                insertfirst=insertfirst,
                 namespace=namespace,
                 debugmode=debugmode,
             )
@@ -631,6 +685,7 @@ class Inject(MixinBase):
         method: Union[str, MethodType, None] = None,
         insertline: Union[None, int] = None,
         poplines: Union[int, List[int]] = [],
+        insertfirst: bool = True,
         namespace: Dict[str, object] = {},
         debugmode: bool = False,
         gc: bool = None,
@@ -644,6 +699,7 @@ class Inject(MixinBase):
             .addkwargs(
                 insertline=insertline,
                 poplines=poplines,
+                insertfirst=insertfirst,
                 namespace=namespace,
                 debugmode=debugmode,
             )
