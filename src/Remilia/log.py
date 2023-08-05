@@ -8,7 +8,8 @@ from time import strftime, localtime
 
 from .res import rFile, rPath
 from .base.models import Ruler
-from .base.rtypes import Pair
+from .base.typings import PairType
+from .impl import CommonPair as Pair
 
 from platform import system
 import inspect
@@ -68,7 +69,7 @@ class Log:
 
 class LogCat:
     all_logs: List[Log]
-    all_subs: List[Pair[Callable[[Log], bool], rFile]]
+    all_subs: List[PairType[Callable[[Log], bool], rFile]]
 
     def __init__(self) -> None:
         self.all_logs = []
@@ -95,7 +96,7 @@ class LogCat:
         return self
 
     def subscribe(
-        self, *pairs: Pair[Callable[[Log], bool], Union[rFile, rPath, Path, str]]
+        self, *pairs: PairType[Callable[[Log], bool], Union[rFile, rPath, Path, str]]
     ) -> Self:
         subs = [
             Pair(

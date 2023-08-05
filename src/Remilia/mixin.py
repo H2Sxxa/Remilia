@@ -10,7 +10,6 @@ from pydantic import BaseModel
 from .log import get_logger
 from .base.exceptions import CodeOperatorError, MixinError
 
-
 class At(Enum):
     # Inject stuff
     HEAD = "mixin_head"

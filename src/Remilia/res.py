@@ -4,7 +4,7 @@ from typing_extensions import Self
 from os import path as opath
 from os import makedirs,mkdir
 
-from .base.rtypes import T
+from .base.typings import T
 from .base.models import PathTimes, SizeUnits
 
 class NotFoundError(OSError):pass

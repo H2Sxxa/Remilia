@@ -5,7 +5,7 @@ from typing import Callable, Dict, List, Union
 import yaml
 from typing_extensions import Self
 
-from .base.rtypes import NT, VT
+from .base.typings import NT, VT
 from .res import DirectoryNotFoundError, rDir, rFile, rPath
 
 

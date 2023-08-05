@@ -4,4 +4,4 @@ Logger=log.Logger()
 
 Logger.info("hello world")
 
-Logger.logcat.export("last.log")
+Logger.logcat.export("latest.log")

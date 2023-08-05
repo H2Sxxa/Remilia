@@ -1,7 +1,7 @@
-from . import exceptions, models, rtypes
+from . import exceptions, models, typings
 
 __all__ = [
-    "rtypes",
+    "typings",
     "exceptions",
     "models",
 ]
