@@ -8,7 +8,9 @@ from typing_extensions import Self
 from pydantic import BaseModel
 
 from .log import get_logger
+from .fancy import NameSpace
 from .base.exceptions import CodeOperatorError, MixinError
+
 
 class At(Enum):
     # Inject stuff
@@ -476,6 +478,45 @@ class Glue(MixinBase):
     def mixin(self) -> None:
         self.mixin_return()
 
+    def func_init(self, mixinmethod: Callable) -> Callable:
+        self.mixinmethod = mixinmethod
+        if self.at == At.INVOKE:
+            for cab in self.method:
+                self.rawmethod = cab
+
+                def glue_invoke(*args, **kwargs):
+                    cargs: CallableArgs
+                    cargs = self.mixinmethod(*args, **kwargs)
+                    return self.rawmethod(*cargs.args, **cargs.kwargs)
+                glue_invoke.__name__=cab.__name__
+                self.namespace.update({cab.__name__: glue_invoke})
+        if self.at == At.RETURN:
+            for cab in self.method:
+                self.rawmethod = cab
+                
+                def glue_invoke(*args, **kwargs):
+                    result = self.rawmethod(*args, **kwargs)
+                    return self.mixinmethod(result)
+                glue_invoke.__name__=cab.__name__
+                self.namespace.update({cab.__name__: glue_invoke})
+        return mixinmethod
+
+    @staticmethod
+    def withFunc(
+        func: Union[Callable, List[Callable]],
+        namespace: NameSpace = NameSpace(),
+        gc: bool = None,
+        at: At = None,
+        mixintools: MixinTools = MixinTools(),
+    ):
+        if not isinstance(func, Iterable):
+            func = [func]
+        return (
+            Glue.cast(Glue, at, func, gc, mixintools)
+            .addkwargs(namespace=namespace)
+            .func_init
+        )
+
     @staticmethod
     def withValue(
         method: Union[str, MethodType, None] = None,
@@ -573,7 +614,9 @@ class Inject(MixinBase):
                 target,
                 self.method,
                 self.rename_method(
-                    self.doinsert(cor, cor.insert_end, codes).export(self.namespace),
+                    self.doinsert(cor, cor.insertlines_head, codes).export(
+                        self.namespace
+                    ),
                     self.mixin_getattr(target, self.method),
                 ),
             )
@@ -685,7 +728,7 @@ class Inject(MixinBase):
         insertline: Union[None, int] = None,
         poplines: Union[int, List[int]] = [],
         insertfirst: bool = True,
-        namespace: Dict[str, object] = {},
+        namespace: NameSpace = NameSpace(),
         debugmode: bool = False,
         gc: bool = None,
         mixintools: MixinTools = MixinTools(),
