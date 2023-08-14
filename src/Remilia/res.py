@@ -168,6 +168,11 @@ class rDir(rPath):
         mkdir(self.absolute(), *args, **kwargs)
         return self
 
+    def newFile(self, name: str, contant: Union[str, bytes], *args, **kwargs):
+        return rFile("%s/%s" % (self.absolute().to_string(), name)).write(
+            contant, *args, **kwargs
+        )
+
 
 class DirBuilder:
     root: rDir

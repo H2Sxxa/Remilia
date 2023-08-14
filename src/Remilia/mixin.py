@@ -8,7 +8,7 @@ from typing_extensions import Self
 from pydantic import BaseModel
 
 from .log import get_logger
-from .fancy import NameSpace
+from .fancy import NameSpace, hasInstance
 from .base.exceptions import CodeOperatorError, MixinError
 
 
@@ -488,16 +488,18 @@ class Glue(MixinBase):
                     cargs: CallableArgs
                     cargs = self.mixinmethod(*args, **kwargs)
                     return self.rawmethod(*cargs.args, **cargs.kwargs)
-                glue_invoke.__name__=cab.__name__
+
+                glue_invoke.__name__ = cab.__name__
                 self.namespace.update({cab.__name__: glue_invoke})
         if self.at == At.RETURN:
             for cab in self.method:
                 self.rawmethod = cab
-                
+
                 def glue_invoke(*args, **kwargs):
                     result = self.rawmethod(*args, **kwargs)
                     return self.mixinmethod(result)
-                glue_invoke.__name__=cab.__name__
+
+                glue_invoke.__name__ = cab.__name__
                 self.namespace.update({cab.__name__: glue_invoke})
         return mixinmethod
 
@@ -565,17 +567,21 @@ class Inject(MixinBase):
     insertline: int
     poplines: List[int]
     insertfirst: bool
-    namespace: Dict[str, object]
+    namespace: NameSpace
     debugmode: bool
 
     def mixin(self) -> None:
         self.mixin_head()
 
     def getNameSpace(self, target: Any):
+        self.namespace = NameSpace(self.namespace)
         try:
-            return target.__module__.__dict__.update(self.namespace)
+            return self.namespace.updateElements(target)
         except:
-            return self.namespace
+            try:
+                return self.namespace.updateModules(target)
+            except:
+                return self.namespace
 
     def doinsert(
         self,
@@ -764,8 +770,9 @@ class OverWrite(MixinBase):
     ):
         return OverWrite.cast(OverWrite, None, method, gc, mixintools).init
 
-
+@hasInstance
 class ClassTracer:
+    instance: Self
     tracelist: List[Type]
 
     def __init__(self) -> None:
@@ -790,10 +797,3 @@ class ClassTracer:
         for t in self.tracelist:
             if name == t.__name__:
                 return t
-
-
-__subtracer = ClassTracer()
-
-
-def getClassTracer() -> ClassTracer:
-    return __subtracer
