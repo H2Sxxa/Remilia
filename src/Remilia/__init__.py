@@ -6,7 +6,6 @@ from . import (
     structdb,
     utils,
     mixin,
-    signs,
     sdb,
     fancy,
     impl,
@@ -16,7 +15,6 @@ from . import (
 __all__ = [
     "impl",
     "mixin",
-    "signs",
     "log",
     "res",
     "structdb",

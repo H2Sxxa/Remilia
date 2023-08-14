@@ -1,9 +1,9 @@
 import json
 import re
 from types import ModuleType
-from typing import Callable, Dict, Generic, SupportsIndex, Type, Union
+from typing import Callable, Dict, Generic, NoReturn, SupportsIndex, Type, Union, List
 from typing_extensions import Self
-
+from inspect import signature
 from .base.typings import NT, T, VT
 
 
@@ -118,6 +118,22 @@ class LinkTun(Generic[T]):
         return self.__back
 
 
+class Signs:
+    @staticmethod
+    def getParasAsType(call: Callable):
+        return [signarg.annotation for _, signarg in signature(call).parameters.items()]
+
+    @staticmethod
+    def check_eq(paraa: List[Type], parab: List[Type]) -> bool:
+        if len(paraa) != len(parab):
+            return False
+        else:
+            for a, b in zip(paraa, parab):
+                if a != b:
+                    return False
+            return True
+
+
 class StringBuilder:
     def __init__(self, __string: str = str()) -> None:
         self.__string = __string
@@ -189,15 +205,23 @@ class StringBuilder:
 
 
 def ifElse(
-    condition: Callable[[], bool] = lambda: True,
+    condition: Union[Callable[[], bool], bool] = lambda: True,
     ifdo: Callable[[], NT] = lambda: None,
     elsedo: Callable[[], VT] = lambda: None,
 ) -> Union[NT, VT]:
-    return ifdo() if condition() else elsedo()
+    if isinstance(condition, Callable):
+        condition = condition()
+    return ifdo() if condition else elsedo()
 
 
 def when(
-    condition: Callable[[], bool] = lambda: True,
+    condition: Union[Callable[[], bool], bool] = lambda: True,
     whendo: Callable[[], T] = lambda: None,
 ) -> T:
-    return whendo() if condition() else None
+    if isinstance(condition, Callable):
+        condition = condition()
+    return whendo() if condition else None
+
+
+def exception(exc: Exception = Exception()) -> NoReturn:
+    raise exc
