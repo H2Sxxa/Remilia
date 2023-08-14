@@ -129,9 +129,9 @@ class DataBaseCate(LinkTun):
         self.__dir.makedirs()
 
     def createTable(self, name: str) -> DataBaseTable:
-        return DataBaseTable(
-            self.__dir.newFile(name, self.__struct.empty), self.__struct
-        ).setBack(self)
+        return DataBaseTable("%s/%s" % (self.getDir(), name), self.__struct).setBack(
+            self
+        )
 
     def getTable(self, name: str) -> DataBaseTable:
         if self.__mode == EnumMode.EXCEPTION:
@@ -140,9 +140,9 @@ class DataBaseCate(LinkTun):
                 lambda: exception(Exception("No such Table '%s'" % name)),
             )
 
-        return DataBaseTable(
-            self.__dir.newFile(name, self.__struct.empty), self.__struct
-        ).setBack(self)
+        return DataBaseTable("%s/%s" % (self.getDir(), name), self.__struct).setBack(
+            self
+        )
 
     def hasTable(self, name: str) -> bool:
         return [] != [table for table in self.getTables() if table.name == name]
