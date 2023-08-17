@@ -1,10 +1,21 @@
 import json
 import re
 from types import ModuleType
-from typing import Callable, Dict, Generic, NoReturn, SupportsIndex, Type, Union, List
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generic,
+    Iterable,
+    NoReturn,
+    SupportsIndex,
+    Type,
+    Union,
+    List,
+)
 from typing_extensions import Self
 from inspect import signature
-from .base.typings import NT, T, VT
+from .base.typings import NT, RT, T, VT
 
 
 def hasInstance(cls: T) -> T:
@@ -203,6 +214,9 @@ class StringBuilder:
     def __str__(self) -> str:
         return self.__string
 
+    def __call__(self, string: str) -> Self:
+        return self.concat(string)
+
 
 def ifElse(
     condition: Union[Callable[[], bool], bool] = lambda: True,
@@ -214,6 +228,16 @@ def ifElse(
     return ifdo() if condition else elsedo()
 
 
+def ifElseV(
+    condition: Union[Callable[[], bool], bool] = lambda: True,
+    ifdo: T = None,
+    elsedo: T = None,
+):
+    if isinstance(condition, Callable):
+        condition = condition()
+    return ifdo if condition else elsedo
+
+
 def when(
     condition: Union[Callable[[], bool], bool] = lambda: True,
     whendo: Callable[[], T] = lambda: None,
@@ -223,5 +247,33 @@ def when(
     return whendo() if condition else None
 
 
+def whenV(
+    condition: Union[Callable[[], bool], bool] = lambda: True,
+    whendo: T = None,
+) -> T:
+    if isinstance(condition, Callable):
+        condition = condition()
+    return whendo if condition else None
+
+
 def exception(exc: Exception = Exception()) -> NoReturn:
     raise exc
+
+
+def tryDo(
+    trydo: Callable[[], T],
+    exceptdo: Callable[[Exception], T] = lambda exc: exception(exc),
+) -> T:
+    try:
+        return trydo()
+    except Exception as e:
+        return exceptdo(e)
+
+
+def doWith(obj: T, objmethod: Callable[..., None], *args, **kwargs) -> T:
+    objmethod(*args, **kwargs)
+    return obj
+
+
+def forEach(iterobj: Iterable[T], eachdo: Callable[[T], RT] = lambda _: _) -> RT:
+    return [eachdo(i) for i in iterobj]

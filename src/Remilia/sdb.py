@@ -77,6 +77,15 @@ class DataBaseTable(LinkTun):
     def read(self) -> Dict[str, T]:
         return self.__struct.loads(self.__file.text)
 
+    def readValueElse(self, key: str, elsevalue: T) -> T:
+        return self.readValue(key) if self.hasKey(key) else elsevalue
+
+    def writeKVS(self, kvmap: Dict[str, T]) -> Self:
+        _ = self.read()
+        _.update(kvmap)
+        self.write(_)
+        return self
+
     def writeKV(self, key: NT, value: VT, /) -> Self:
         tmp = self.read()
         tmp.update({key: value})
