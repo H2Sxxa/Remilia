@@ -1,8 +1,8 @@
 import json
 import re
+from functools import partialmethod
 from types import ModuleType
 from typing import (
-    Any,
     Callable,
     Dict,
     Generic,
@@ -277,3 +277,54 @@ def doWith(obj: T, objmethod: Callable[..., None], *args, **kwargs) -> T:
 
 def forEach(iterobj: Iterable[T], eachdo: Callable[[T], RT] = lambda _: _) -> RT:
     return [eachdo(i) for i in iterobj]
+
+
+class MarkDownBuilder(StringBuilder):
+    def title(self, level: int, text: str) -> Self:
+        return self.concat("%s %s" % ("#" * level, text)).newline
+
+    title1 = partialmethod(title, 1)
+    title2 = partialmethod(title, 2)
+    title3 = partialmethod(title, 3)
+    title4 = partialmethod(title, 4)
+    title5 = partialmethod(title, 5)
+    title6 = partialmethod(title, 6)
+
+    def warp(self, symbol: str, text: str) -> Self:
+        return self.concat(f"{symbol}%s{symbol}" % text)
+
+    bold = partialmethod(warp, "**")
+    italic = partialmethod(warp, "*")
+    deline = partialmethod(warp, "~~")
+
+    def block(self, symbol: str, *texts: str) -> Self:
+        return (
+            self.newline.concat(symbol)
+            .newline.concat("\n".join(texts))
+            .newline.concat(symbol)
+        )
+
+    codeblock = partialmethod(block, "```")
+
+    def hyperlink(self, text: str = "", uri: str = ""):
+        return self.concat("[%s](%s)" % (text, uri))
+
+    def image(self, text: str = "", imageuri: str = ""):
+        return self.concat("!").hyperlink(text, imageuri)
+
+    def startwith(self, symbol: str, text: str) -> Self:
+        return self.concat("%s %s" % (symbol, text))
+
+    quote = partialmethod(startwith, ">")
+    unorderlist = partialmethod(startwith, "-")
+
+    def orderlist(self, num: Union[str, int], text: str) -> Self:
+        return self.startwith(num, text)
+
+    @property
+    def horizontal_rule(self):
+        return self.newline2("---").newline2
+
+    @property
+    def newline2(self) -> Self:
+        return self.newlinen(2)
