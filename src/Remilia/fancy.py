@@ -65,7 +65,10 @@ def typedet(string: str, strict=True) -> any:
             try:
                 return float(string)
             except:
-                pass
+                try:
+                    return float("0" + string)
+                except:
+                    pass
         else:
             return int(string)
     try:
@@ -278,6 +281,9 @@ def doWith(obj: T, objmethod: Callable[..., None], *args, **kwargs) -> T:
 def forEach(iterobj: Iterable[T], eachdo: Callable[[T], RT] = lambda _: _) -> RT:
     return [eachdo(i) for i in iterobj]
 
+
+def forEach(func: Callable[[int, T], RT], iterable: Iterable[T]) -> List[RT]:
+    return [func(index, x) for index, x in enumerate(iterable)]
 
 class MarkDownBuilder(StringBuilder):
     def title(self, level: int, text: str) -> Self:
