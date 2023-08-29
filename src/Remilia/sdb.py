@@ -7,7 +7,8 @@ from json import loads as jloads, dumps as jdump
 
 from Remilia.base.typings import T, NT, VT
 from Remilia.res import rDir, rFile, rPath
-from Remilia.fancy import exception, hasInstance, propertyOf, LinkTun, toInstance, when
+from Remilia.fancy import hasInstance, LinkTun, toInstance
+from Remilia.expression import exception, when
 
 
 class EnumMode(Enum):

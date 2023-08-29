@@ -6,8 +6,6 @@ from typing import (
     Callable,
     Dict,
     Generic,
-    Iterable,
-    NoReturn,
     SupportsIndex,
     Type,
     Union,
@@ -15,6 +13,8 @@ from typing import (
 )
 from typing_extensions import Self
 from inspect import signature
+
+from .expression import ifElse, when
 from .base.typings import NT, RT, T, VT
 
 
@@ -219,71 +219,6 @@ class StringBuilder:
 
     def __call__(self, string: str) -> Self:
         return self.concat(string)
-
-
-def ifElse(
-    condition: Union[Callable[[], bool], bool] = lambda: True,
-    ifdo: Callable[[], NT] = lambda: None,
-    elsedo: Callable[[], VT] = lambda: None,
-) -> Union[NT, VT]:
-    if isinstance(condition, Callable):
-        condition = condition()
-    return ifdo() if condition else elsedo()
-
-
-def ifElseV(
-    condition: Union[Callable[[], bool], bool] = lambda: True,
-    ifdo: T = None,
-    elsedo: T = None,
-):
-    if isinstance(condition, Callable):
-        condition = condition()
-    return ifdo if condition else elsedo
-
-
-def when(
-    condition: Union[Callable[[], bool], bool] = lambda: True,
-    whendo: Callable[[], T] = lambda: None,
-) -> T:
-    if isinstance(condition, Callable):
-        condition = condition()
-    return whendo() if condition else None
-
-
-def whenV(
-    condition: Union[Callable[[], bool], bool] = lambda: True,
-    whendo: T = None,
-) -> T:
-    if isinstance(condition, Callable):
-        condition = condition()
-    return whendo if condition else None
-
-
-def exception(exc: Exception = Exception()) -> NoReturn:
-    raise exc
-
-
-def tryDo(
-    trydo: Callable[[], T],
-    exceptdo: Callable[[Exception], T] = lambda exc: exception(exc),
-) -> T:
-    try:
-        return trydo()
-    except Exception as e:
-        return exceptdo(e)
-
-
-def doWith(obj: T, objmethod: Callable[..., None], *args, **kwargs) -> T:
-    objmethod(*args, **kwargs)
-    return obj
-
-
-def forEach(iterobj: Iterable[T], eachdo: Callable[[T], RT] = lambda _: _) -> RT:
-    return [eachdo(i) for i in iterobj]
-
-
-def forEach(func: Callable[[int, T], RT], iterable: Iterable[T]) -> List[RT]:
-    return [func(index, x) for index, x in enumerate(iterable)]
 
 class MarkDownBuilder(StringBuilder):
     def title(self, level: int, text: str) -> Self:

@@ -8,6 +8,7 @@ from . import (
     sdb,
     fancy,
     impl,
+    expression,
 )
 
 __all__ = [
@@ -20,4 +21,5 @@ __all__ = [
     "base",
     "sdb",
     "fancy",
+    "expression"
 ]
