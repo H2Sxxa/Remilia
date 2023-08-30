@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 import ctypes
 from functools import partial
-from typing import TYPE_CHECKING, Any, Dict, Optional, Self, Type
-
+from typing import TYPE_CHECKING, Any, Dict, Optional, Type
+from typing_extensions import Self
 
 from Remilia.base.typings import NT, T, RT, VT
 from Remilia.fancy import toInstance, redirectTo
@@ -116,7 +116,9 @@ class CPyAPI(DLLApiBase):
         ...
 
     @redirectTo(ctypes.pythonapi.PyDict_GetItem)
-    def PyDict_GetItem(self, __object: ctypes.py_object, __key: ctypes.py_object) -> int:
+    def PyDict_GetItem(
+        self, __object: ctypes.py_object, __key: ctypes.py_object
+    ) -> int:
         ...
 
 
@@ -136,7 +138,7 @@ class PyAPI(CPyAPI.APIType):
         super().PyDict_DelItem(toPyObj(__object), toPyObj(__key))
 
     def PyDict_GetItem(self, __object: Dict[NT, VT], __key: NT) -> int:
-        '''
+        """
         return Borrowed reference
-        '''
+        """
         return super().PyDict_GetItem(toPyObj(__object), toPyObj(__key))
