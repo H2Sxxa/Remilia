@@ -180,8 +180,8 @@ class LogicExpression:
             tryDo(trydo=trydo, exceptdo=exceptdo, trydoargs=trydoargs)
         )
 
-    def isEqual(self, value: T) -> "_BooleanExp":
-        return _BooleanExp(value == self.__currentResult, self)
+    def isEqual(self, value: T) -> "BooleanExpression":
+        return BooleanExpression(value == self.__currentResult, self)
 
     def exception(self, exc: Exception = Exception()) -> NoReturn:
         return exception(exc=exc)
@@ -211,7 +211,7 @@ class LogicExpression:
         return self.__currentResult
 
 
-class _BooleanExp:
+class BooleanExpression:
     __true, __false = [], []
 
     def __init__(self, value: bool = True, lp: LogicExpression = LogicExpression):
@@ -223,6 +223,8 @@ class _BooleanExp:
             forEach(self.__true, LambdaPreSet.invokeIt)
         else:
             forEach(self.__false, LambdaPreSet.invokeIt)
+        self.__true.clear()
+        self.__false.clear()
         return self.__lp
 
     def ifTrue(self, truedo: Callable[[], None]):
@@ -242,3 +244,34 @@ class _BooleanExp:
             elsedo=Args(self.__false),
         )
         return self
+
+
+class MatchExpression:
+    __cases: List[Callable] = []
+    value = None
+    __default = lambda _: _
+
+    def match(self, value: T) -> Self:
+        self.value = value
+        return self
+
+    def case(self, value: T, casedo: Callable[[], T]) -> Self:
+        self.__cases.append(
+            (
+                value,
+                casedo,
+            )
+        )
+        return self
+
+    def default(self, default: Callable[[T], T]) -> Self:
+        self.__default = default
+        return self
+
+    def then(self) -> None:
+        doto = [_ for v, _ in self.__cases if v == self.value]
+        self.__cases.clear()
+        if doto != []:
+            return forEach(doto, LPS.II)
+        else:
+            return [self.__default(self.value)]

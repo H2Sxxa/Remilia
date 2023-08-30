@@ -9,6 +9,7 @@ from . import (
     fancy,
     impl,
     expression,
+    cutils,
 )
 
 __all__ = [
@@ -21,5 +22,6 @@ __all__ = [
     "base",
     "sdb",
     "fancy",
-    "expression"
+    "expression",
+    "cutils"
 ]

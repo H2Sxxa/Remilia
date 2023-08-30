@@ -6,6 +6,7 @@ from typing import (
     Callable,
     Dict,
     Generic,
+    Optional,
     SupportsIndex,
     Type,
     Union,
@@ -23,12 +24,12 @@ def hasInstance(cls: T) -> T:
     return cls
 
 
-def toInstance(cls: T) -> T:
+def toInstance(cls: Type[T]) -> T:
     return cls()
 
 
 def hasInstanceWithArgs(*args, **kwargs) -> T:
-    def hasInstanceWrap(cls: T) -> T:
+    def hasInstanceWrap(cls: Type[T]) -> T:
         setattr(cls, "instance", cls(*args, **kwargs))
         return cls
 
@@ -36,7 +37,7 @@ def hasInstanceWithArgs(*args, **kwargs) -> T:
 
 
 def toInstanceWithArgs(*args, **kwargs) -> T:
-    def toInstanceWrap(cls: T) -> T:
+    def toInstanceWrap(cls: Type[T]) -> T:
         return cls(*args, **kwargs)
 
     return toInstanceWrap
@@ -49,6 +50,20 @@ def propertyOf(target: Callable, *args, **kwargs):
 
         return property(argwarp)
 
+    return wrap
+
+
+def implBy(target, name: Optional[str] = None):
+    def wrap(_: T) -> T:
+        return lambda *args, **kwargs: getattr(
+            target, _.__name__ if name is None else name
+        )(*args, **kwargs)
+
+    return wrap
+
+def redirectTo(target: Callable):
+    def wrap(_:T) -> T:
+        return target
     return wrap
 
 
@@ -219,6 +234,7 @@ class StringBuilder:
 
     def __call__(self, string: str) -> Self:
         return self.concat(string)
+
 
 class MarkDownBuilder(StringBuilder):
     def title(self, level: int, text: str) -> Self:

@@ -1,9 +1,12 @@
-from typing import Generic, TypeVar,TypeAlias
+from typing import TYPE_CHECKING, Generic, TypeVar, TypeAlias
 
-RT=TypeVar("RT") #Return Type
-T=TypeVar("T")
+RT = TypeVar("RT")  # Return Type
+T = TypeVar("T")
 
-NT=TypeVar("NT") #the first arg of a pair
-VT=TypeVar("VT") #the second arg of a pair
+NT = TypeVar("NT")  # the first arg of a pair
+VT = TypeVar("VT")  # the second arg of a pair
 
-class PairType(Generic[NT,VT]):...
+
+class PairType(Generic[NT, VT]):
+    ...
+

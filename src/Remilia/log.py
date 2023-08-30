@@ -2,7 +2,7 @@ from functools import partial
 from pathlib import Path
 from colorama import Fore, Back, Style, Cursor
 from colorama import init as initcolor
-from typing import Callable, Dict, List, Optional, TYPE_CHECKING, Union
+from typing import Callable, Dict, List, Optional, Union,TYPE_CHECKING
 from typing_extensions import Self
 from time import strftime, localtime
 
@@ -15,11 +15,9 @@ from platform import system
 import inspect
 
 if TYPE_CHECKING:
-
-    class _CallMethod:
-        def __call__(self, *args: str) -> None:
+    class _CallLogMethod:
+        def __call__(self, *args:str) -> None:
             ...
-
 
 try:
     if system() == "Windows":
@@ -172,7 +170,7 @@ class Logger:
         if self.vlevel >= clog.ruler.level:
             self.handle_out(clog.color)
 
-    def __getattr__(self, name) -> "_CallMethod":
+    def __getattr__(self, name) -> "_CallLogMethod":
         if name.startswith("__") and name.endswith("__"):
             raise AttributeError(
                 f"'{self.__class__.__name__}' object has no attribute '{name}'"
