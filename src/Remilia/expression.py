@@ -1,6 +1,6 @@
 from enum import Enum
 from functools import partial
-from typing import Any, Callable, Dict, Iterable, List, Optional, Union, NoReturn
+from typing import Callable, Dict, Iterable, List, Optional, Union, NoReturn
 from typing_extensions import Self
 from Remilia.base.typings import NT, RT, T, VT
 from dataclasses import dataclass
@@ -324,7 +324,8 @@ class FunctionBuilder:
     def bindVar(self, name: str, value: Optional[T] = None) -> Self:
         self.__func_directives.extend([self.__Directives.BIND_VAR, name, value])
         return self
-
+    
+    
     def bindFunc(self, func: Callable) -> Self:
         self.__func_directives.extend([self.__Directives.BIND_FUNC, func])
         return self
@@ -424,3 +425,10 @@ class FunctionBuilder:
         _ = FunctionBuilder()
         forEach(directives, _.raw)
         return _.build()
+
+    @staticmethod
+    def fromDirectiveBody(*directives: Union[__Directives, T]) -> Callable:
+        _ = FunctionBuilder()
+        _.raw(Args())
+        forEach(directives, _.raw)
+        return _.end()
