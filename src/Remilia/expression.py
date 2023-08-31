@@ -1,9 +1,9 @@
+from enum import Enum
 from functools import partial
-from typing import Callable, Iterable, List, Optional, Union, NoReturn
+from typing import Any, Callable, Dict, Iterable, List, Optional, Union, NoReturn
 from typing_extensions import Self
 from Remilia.base.typings import NT, RT, T, VT
 from dataclasses import dataclass
-
 from .base.models import Args
 
 
@@ -110,7 +110,7 @@ class LambdaPreSet:
     wrapCall: Callable[[Callable], Callable] = lambda call: partial(
         lambda call, *args, **kwargs: call(*args, **kwargs), call
     )
-    exception: Callable[..., NoReturn] = lambda _: _
+    exception: Callable[[Exception], NoReturn] = lambda _: exception(_)
     returnValue: Callable[[T], Callable[[], T]] = lambda value: lambda: value
 
 
@@ -173,7 +173,7 @@ class LogicExpression:
     def tryDo(
         self,
         trydo: Callable[[RT], T],
-        exceptdo: Callable[[RT, Exception], T] = lambda _, exc: exception(exc),
+        exceptdo: Callable[[RT, Exception], T] = LPS.EXC,
         trydoargs: Args = Args(),
     ) -> Self:
         return self.setResult(
@@ -275,3 +275,152 @@ class MatchExpression:
             return forEach(doto, LPS.II)
         else:
             return [self.__default(self.value)]
+
+
+class FunctionBuilder:
+    class __Directives(Enum):
+        BIND_FUNC = 0
+        POST_ARG = 1
+        POST_KWARG = 2
+        POST_END = 3
+        INVOKE_FUNC = 4
+
+        GET_VAR = 5
+        SAVE_VAR = 6
+        BIND_VAR = 7
+
+        END = -1
+
+    _Directives = __Directives
+    __func_directives: List[__Directives]
+    __func_namespace: Dict[str, T]
+
+    def __init__(self) -> None:
+        self.__func_directives = [
+            Args(),
+        ]
+        self.__func_namespace = {}
+
+    def clearNameSpace(self) -> Self:
+        self.__func_namespace.clear()
+        return self
+
+    def defArgs(self, *arg_names: str, **kwargs) -> Self:
+        self.__func_directives[0] = Args(*arg_names, **kwargs)
+        return self
+
+    def saveVar(self, name: str) -> Self:
+        self.__func_directives.extend([self.__Directives.SAVE_VAR, name])
+        return self
+
+    def getVar(self, name: str) -> Self:
+        self.__func_directives.extend([self.__Directives.GET_VAR, name])
+        return self
+
+    def end(self) -> Callable:
+        self.__func_directives.append(self.__Directives.END)
+        return self.build()
+
+    def bindVar(self, name: str, value: Optional[T] = None) -> Self:
+        self.__func_directives.extend([self.__Directives.BIND_VAR, name, value])
+        return self
+
+    def bindFunc(self, func: Callable) -> Self:
+        self.__func_directives.extend([self.__Directives.BIND_FUNC, func])
+        return self
+
+    def invokeFunc(self) -> Self:
+        self.__func_directives.append(self.__Directives.INVOKE_FUNC)
+        return self
+
+    def postArgs(self) -> Self:
+        self.__func_directives.append(self.__Directives.POST_ARG)
+        return self
+
+    def postKwarg(self, name: str) -> Self:
+        self.__func_directives.extend([self.__Directives.POST_KWARG, name])
+        return self
+
+    def raw(self, v: T) -> Self:
+        self.__func_directives.append(v)
+        return self
+
+    def endPost(self) -> Self:
+        self.__func_directives.append(self.__Directives.POST_END)
+        return self
+
+    def build(self) -> Callable:
+        def _wrap(*args, **kwargs) -> RT:
+            __current: RT = None
+            __current_func: Callable = None
+            # Receive Args & store in namespace
+            defargs: Args = self.__func_directives[0]
+            for n, v in zip(defargs.args, args):
+                self.__func_namespace.update({n: v})
+            self.__func_namespace.update(defargs.kwargs)
+            self.__func_namespace.update(kwargs)
+            # Handle directives
+            directives = iter(self.__func_directives[1:])
+            _dit = next(directives)
+            while _dit != self.__Directives.END:
+                if _dit == self.__Directives.GET_VAR:
+                    __current = self.__handleVarDirectives(_dit, directives)
+                if _dit == self.__Directives.SAVE_VAR:
+                    self.__func_namespace.update(
+                        {
+                            self.__handleVarDirectives(
+                                next(directives), directives
+                            ): __current
+                        }
+                    )
+                if _dit == self.__Directives.BIND_VAR:
+                    __current = self.__handleVarDirectives(_dit, directives)
+                if _dit == self.__Directives.BIND_FUNC:
+                    __current_func = next(directives)
+                if _dit == self.__Directives.POST_ARG:
+                    __current = next(directives)
+                    rawarg = []
+                    rawkwarg = {}
+                    while __current != self.__Directives.POST_END:
+                        if __current == self.__Directives.POST_KWARG:
+                            rawkwarg.update(
+                                {
+                                    next(directives): self.__handleVarDirectives(
+                                        next(directives), directives
+                                    )
+                                }
+                            )
+                        else:
+                            rawarg.append(
+                                self.__handleVarDirectives(__current, directives)
+                            )
+                        __current = next(directives)
+                    __current = Args(*rawarg, **rawkwarg)
+                if _dit == self.__Directives.INVOKE_FUNC:
+                    if isinstance(__current, Args):
+                        __current = __current_func(*__current.args, **__current.kwargs)
+                    else:
+                        __current = __current_func()
+                _dit = next(directives)
+            return __current
+
+        return _wrap
+
+    def __handleVarDirectives(self, dit, directives):
+        if dit == self.__Directives.GET_VAR:
+            key = next(directives)
+            if key not in self.__func_namespace:
+                raise NameError("name '%s' is not defined" % (key))
+            return self.__func_namespace[key]
+        elif dit == self.__Directives.BIND_VAR:
+            name, val = next(directives), next(directives)
+            self.__func_namespace.update({name: val})
+            return val
+        else:
+            return dit
+
+    @staticmethod
+    def fromDirectives(*directives: Union[__Directives, T]) -> Callable:
+        _ = FunctionBuilder()
+        forEach(directives, _.raw)
+        return _.build()

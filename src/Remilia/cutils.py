@@ -125,7 +125,7 @@ class CPyAPI(DLLApiBase):
 @toInstance
 class PyAPI(CPyAPI.APIType):
     """
-    The class's some method accepts Python type, you don't need to convert them.
+    The class's some method accepts Python type, you don't need to convert them. { @link CPyAPI }
     """
 
     def PyDict_SetItem(self, __object: Dict[NT, VT], __key: NT, __val: VT) -> None:

@@ -47,4 +47,18 @@ class Args:
         self.kwargs = kwargs
 
     def __str__(self):
-        return "Args[ *(%s) | **(%s) ]" % (self.args, self.kwargs)
+        return "Args[ *%s & **%s ]" % (self.args, self.kwargs)
+
+    def appendArgs(
+        self,
+        *args: T,
+    ) -> Self:
+        self.args = (*self.args, *args)
+        return self
+
+    def appendKwargs(
+        self,
+        **kwargs,
+    ) -> Self:
+        self.kwargs.update(kwargs)
+        return self
