@@ -13,6 +13,13 @@ from . import (
     depi,
 )
 
+# Self fix
+try:
+    from typing import Self as _
+except:
+    import typing, typing_extensions
+    typing.__dict__.update({"Self": typing_extensions.Self})
+
 __all__ = [
     "impl",
     "mixin",
