@@ -1,8 +1,8 @@
 from abc import abstractmethod
 from inspect import signature
-from typing import Callable, Dict, List, Self, Type
-
-from Remilia.base.typings import RT, T
+from typing import Callable, Dict, List, Type
+from typing_extensions import Self
+from Remilia.base.typings import RT, T, Empty
 from .base.models import SingleArg
 
 
@@ -34,7 +34,7 @@ class Signs:
             return True
 
 
-class _Depend:
+class DependObs:
     __f: Callable[..., RT]
     __i: Dict[str, T]
 
@@ -42,7 +42,7 @@ class _Depend:
         self.__f = func
         self.__i = {}
         for sa in Signs.getParas(self.__f):
-            if issubclass(sa.arg_type, BeDepend):
+            if issubclass(sa.arg_type, BeDepend) and sa.arg_default == Empty:
                 self.__i.update({sa.arg_name: sa.arg_type.get_dependence()})
 
     def __call__(self, *args, **kwargs) -> RT:
@@ -50,7 +50,7 @@ class _Depend:
 
 
 def Depend(func: T) -> T:
-    return _Depend(func)
+    return DependObs(func)
 
 
 class _BeDependInstance(type):
