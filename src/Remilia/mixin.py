@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from .log import get_logger
 from .fancy import NameSpace, hasInstance
 from .base.exceptions import CodeOperatorError, MixinError
-
+from .base.models import Args
 
 class At(Enum):
     # Inject stuff
@@ -161,16 +161,6 @@ class MixinTools(BaseModel):
     setattr: Callable = mixin_setattr
     hasattr: Callable = mixin_hasattr
     delattr: Callable = mixin_delattr
-
-
-class CallableArgs:
-    args: Tuple[Any] = ()
-    kwargs: Dict[str, Any] = {}
-
-    def __init__(self, *args, **kwargs) -> None:
-        self.args = args
-        self.kwargs.update(kwargs)
-
 
 class MixinCallable(Callable):
     @property
@@ -459,7 +449,7 @@ class Glue(MixinBase):
             self.rawmethod: MethodType = self.mixin_getattr(t, self.method)
 
             def glue_invoke(*args, **kwargs):
-                cargs: CallableArgs
+                cargs: Args
                 cargs = self.mixinmethod(*args, **kwargs)
                 return self.rawmethod(*cargs.args, **cargs.kwargs)
 
@@ -485,7 +475,7 @@ class Glue(MixinBase):
                 self.rawmethod = cab
 
                 def glue_invoke(*args, **kwargs):
-                    cargs: CallableArgs
+                    cargs: Args
                     cargs = self.mixinmethod(*args, **kwargs)
                     return self.rawmethod(*cargs.args, **cargs.kwargs)
 

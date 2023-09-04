@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple, Type, Union
 from pydantic import BaseModel
 from typing_extensions import Self
 
@@ -62,3 +62,11 @@ class Args:
     ) -> Self:
         self.kwargs.update(kwargs)
         return self
+
+
+@dataclass
+class SingleArg:
+    arg_name: str
+    arg_type: Type[T]
+    arg_default: Optional[T]
+    arg_index: Optional[int]

@@ -10,6 +10,7 @@ from . import (
     impl,
     expression,
     cutils,
+    depi,
 )
 
 __all__ = [
@@ -23,5 +24,6 @@ __all__ = [
     "sdb",
     "fancy",
     "expression",
-    "cutils"
+    "cutils",
+    "depi",
 ]

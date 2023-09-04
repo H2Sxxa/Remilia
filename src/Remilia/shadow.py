@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from .mixin import MixinBase, MixinTools
 from .base.exceptions import ExistedObjectError, NoSuchMethodError
-from .fancy import Signs
+from .depi import Signs
 
 SHADOW_MAP = "__shadowmethod_map__"
 

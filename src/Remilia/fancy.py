@@ -28,6 +28,12 @@ def toInstance(cls: Type[T]) -> T:
     return cls()
 
 
+class InstanceMeta(type):
+    def __new__(cls, *_) -> Self:
+        setattr(cls, "instance", cls())
+        return super.__new__(cls, *_)
+
+
 def hasInstanceWithArgs(*args, **kwargs) -> T:
     def hasInstanceWrap(cls: Type[T]) -> T:
         setattr(cls, "instance", cls(*args, **kwargs))
@@ -61,9 +67,11 @@ def implBy(target, name: Optional[str] = None):
 
     return wrap
 
+
 def redirectTo(target: Callable):
-    def wrap(_:T) -> T:
+    def wrap(_: T) -> T:
         return target
+
     return wrap
 
 
@@ -147,20 +155,19 @@ class LinkTun(Generic[T]):
         return self.__back
 
 
-class Signs:
-    @staticmethod
-    def getParasAsType(call: Callable):
-        return [signarg.annotation for _, signarg in signature(call).parameters.items()]
+class Option(Generic[T]):
+    def __init__(self, val: T) -> None:
+        super().__init__()
+        self.__val = val
 
-    @staticmethod
-    def check_eq(paraa: List[Type], parab: List[Type]) -> bool:
-        if len(paraa) != len(parab):
-            return False
-        else:
-            for a, b in zip(paraa, parab):
-                if a != b:
-                    return False
-            return True
+    def unwrap(self) -> T:
+        return self.__val
+
+    def is_empty(self) -> bool:
+        return self.__val is None
+
+    def unwrap_else(self, elseval: T) -> T:
+        return elseval if self.is_empty() else self.__val
 
 
 class StringBuilder:
