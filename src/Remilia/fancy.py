@@ -1,7 +1,7 @@
 import json
 import re
 from functools import partialmethod
-from types import ModuleType
+from types import MethodType, ModuleType
 from typing import (
     Callable,
     Dict,
@@ -10,7 +10,6 @@ from typing import (
     SupportsIndex,
     Type,
     Union,
-    List,
 )
 from typing_extensions import Self
 from inspect import signature
@@ -29,9 +28,20 @@ def toInstance(cls: Type[T]) -> T:
 
 
 class InstanceMeta(type):
-    def __new__(cls, *_) -> Self:
-        setattr(cls, "instance", cls())
-        return super.__new__(cls, *_)
+    instance: Self
+
+    def __new__(cls, name, bases, attr) -> Self:
+        attr["instance"] = classmethod(
+            property(lambda *_: cls.__new__(cls, name, bases, attr)())
+        )
+        return super().__new__(cls, name, bases, attr)
+
+
+def fastproperty(__f: Callable, __cls: Optional[T] = None) -> MethodType:
+    wrap = classmethod(property(__f))
+    if __cls is not None:
+        setattr(__cls, __f.__name__, wrap)
+    return wrap
 
 
 def hasInstanceWithArgs(*args, **kwargs) -> T:
