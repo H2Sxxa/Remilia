@@ -108,7 +108,7 @@ class DataBaseTable(LinkTun):
         return self
 
     def __str__(self) -> str:
-        return "%s[%s] <%s>" % (self.__class__.__name__, self.read(), self.name)
+        return f"{self.__class__.__name__}[{self.read()}] <{self.name}>"
 
     def backto(self) -> "DataBaseCate":
         return super().backto()
@@ -139,20 +139,16 @@ class DataBaseCate(LinkTun):
         self.__dir.makedirs()
 
     def createTable(self, name: str) -> DataBaseTable:
-        return DataBaseTable("%s/%s" % (self.getDir(), name), self.__struct).setBack(
-            self
-        )
+        return DataBaseTable(f"{self.getDir()}/{name}", self.__struct).setBack(self)
 
     def getTable(self, name: str) -> DataBaseTable:
         if self.__mode == EnumMode.EXCEPTION:
             when(
                 not self.hasTable(name),
-                lambda: exception(Exception("No such Table '%s'" % name)),
+                lambda: exception(Exception(f"No such Table '{name}'")),
             )
 
-        return DataBaseTable("%s/%s" % (self.getDir(), name), self.__struct).setBack(
-            self
-        )
+        return DataBaseTable(f"{self.getDir()}/{name}", self.__struct).setBack(self)
 
     def hasTable(self, name: str) -> bool:
         return [] != [table for table in self.getTables() if table.name == name]
@@ -173,7 +169,7 @@ class DataBaseCate(LinkTun):
         return self.__dir
 
     def __str__(self) -> str:
-        return "%s[%s] <%s>" % (self.__class__.__name__, self.getTables(), self.name)
+        return f"{self.__class__.__name__}[{self.getTables()}] <{self.name}>"
 
 
 class DataBase:
@@ -197,10 +193,10 @@ class DataBase:
         if self.__mode == EnumMode.EXCEPTION:
             when(
                 not self.hasCate(name),
-                lambda: exception(Exception("No such Cate '%s'" % name)),
+                lambda: exception(Exception(f"No such Cate '{name}'")),
             )
         return DataBaseCate(
-            "%s/%s" % (self.getDir(), name), self.__struct, mode=self.__mode
+            f"{self.getDir()}/{name}", self.__struct, mode=self.__mode
         ).setBack(self)
 
     def getCates(self) -> List[DataBaseCate]:
@@ -214,9 +210,7 @@ class DataBase:
         return [] != [cate for cate in self.getCates() if cate.name == name]
 
     def createCate(self, name: str) -> DataBaseCate:
-        return DataBaseCate("%s/%s" % (self.getDir(), name), self.__struct).setBack(
-            self
-        )
+        return DataBaseCate(f"{self.getDir()}/{name}", self.__struct).setBack(self)
 
     @property
     def name(self):
@@ -226,4 +220,4 @@ class DataBase:
         return self.__dir
 
     def __str__(self) -> str:
-        return "%s[%s] <%s>" % (self.__class__.__name__, self.getCates(), self.name)
+        return f"{self.__class__.__name__}[{self.getCates()}] <{self.name}>"
