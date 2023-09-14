@@ -28,10 +28,7 @@ class Signs:
         if len(paraa) != len(parab):
             return False
         else:
-            for a, b in zip(paraa, parab):
-                if a != b:
-                    return False
-            return True
+            return all(a == b for a, b in zip(paraa, parab))
 
 
 class DependObs:
