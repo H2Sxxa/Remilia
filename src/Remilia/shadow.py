@@ -20,12 +20,12 @@ class Shadow(MixinBase):
     def mixin(self) -> None:
         for t_cls in self.configs.target:
             if not self.mixin_hasattr(t_cls, SHADOW_MAP):
-                self.mixin_setattr(t_cls, SHADOW_MAP, dict())
+                self.mixin_setattr(t_cls, SHADOW_MAP, {})
 
             shadowmap: Dict[str, Dict[MethodType, List]]
             shadowmap = self.mixin_getattr(t_cls, SHADOW_MAP)
             if not shadowmap.__contains__(self.method):
-                shadowmap.update({self.method: dict()})
+                shadowmap.update({self.method: {}})
                 if self.mixin_hasattr(t_cls, self.method):
                     shadowmap.get(self.method).update(
                         {
@@ -51,7 +51,7 @@ class Shadow(MixinBase):
 
     @property
     def shadowName(self) -> str:
-        return self.method + "_%s" % str(uuid4()).replace("-", "")
+        return f'{self.method}_{str(uuid4()).replace("-", "")}'
 
     @staticmethod
     def withValue(
@@ -81,19 +81,14 @@ class ShadowInvoker:
         try:
             return self.findAllWithType(paratype)[0]
         except:
-            raise NoSuchMethodError(
-                "can't find method with %s in %s" % (paratype, self.cls)
-            )
+            raise NoSuchMethodError(f"can't find method with {paratype} in {self.cls}")
 
     def findAll(
         self, method: Union[str, MethodType], paratype: List[object]
     ) -> List[MethodType]:
         shadowmap: Dict[str, Dict[MethodType, List]]
         shadowmap = getattr(self.cls, SHADOW_MAP)
-        if not issubclass(method.__class__, str):
-            methodN = method.__name__
-        else:
-            methodN = method
+        methodN = method.__name__ if not issubclass(method.__class__, str) else method
         return [
             method for method, paras in shadowmap[methodN].items() if paras == paratype
         ]
@@ -105,7 +100,7 @@ class ShadowInvoker:
             return self.findAll(method, paratype)[0]
         except:
             raise NoSuchMethodError(
-                "can't find '%s' method with %s in %s" % (method, paratype, self.cls)
+                f"can't find '{method}' method with {paratype} in {self.cls}"
             )
 
     def invokeAll(
@@ -131,16 +126,12 @@ class ShadowAccessor:
         self.force = force
 
     def setAccessible(self, name: str, force=None) -> None:
-        if force == None:
+        if force is None:
             force = self.force
         if not force:
             if hasattr(self.cls, name):
-                raise ExistedObjectError(
-                    "%s has existed object -> %s" % (self.cls.__name__, name)
-                )
-        setattr(
-            self.cls, name, lambda _: getattr(_, "_%s%s" % (_.__class__.__name__, name))
-        )
+                raise ExistedObjectError(f"{self.cls.__name__} has existed object -> {name}")
+        setattr(self.cls, name, lambda _: getattr(_, f"_{_.__class__.__name__}{name}"))
         setattr(self.cls, name, property(getattr(self.cls, name)))
 
     def Accessor(self, method: Callable):

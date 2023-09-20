@@ -271,10 +271,7 @@ class MatchExpression:
     def then(self) -> None:
         doto = [_ for v, _ in self.__cases if v == self.value]
         self.__cases.clear()
-        if doto != []:
-            return forEach(doto, LPS.II)
-        else:
-            return [self.__default(self.value)]
+        return forEach(doto, LPS.II) if doto != [] else [self.__default(self.value)]
 
 
 class FunctionBuilder:
@@ -384,12 +381,10 @@ class FunctionBuilder:
                     rawkwarg = {}
                     while __current != self.__Directives.POST_END:
                         if __current == self.__Directives.POST_KWARG:
-                            rawkwarg.update(
-                                {
-                                    next(directives): self.__handleVarDirectives(
-                                        next(directives), directives
-                                    )
-                                }
+                            rawkwarg[
+                                next(directives)
+                            ] = self.__handleVarDirectives(
+                                next(directives), directives
                             )
                         else:
                             rawarg.append(
@@ -411,7 +406,7 @@ class FunctionBuilder:
         if dit == self.__Directives.GET_VAR:
             key = next(directives)
             if key not in self.__func_namespace:
-                raise NameError("name '%s' is not defined" % (key))
+                raise NameError(f"name '{key}' is not defined")
             return self.__func_namespace[key]
         elif dit == self.__Directives.BIND_VAR:
             name, val = next(directives), next(directives)

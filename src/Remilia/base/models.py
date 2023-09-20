@@ -19,7 +19,7 @@ class Ruler(BaseModel):
     timeformat: str = "%H:%M:%S"
 
     def exgenerate(self, model: str, *color: str) -> Self:
-        self.explain = model % tuple(["" for _ in color])
+        self.explain = model % tuple("" for _ in color)
         self.excolor = model % color
         return self
 
@@ -47,7 +47,7 @@ class Args:
         self.kwargs = kwargs
 
     def __str__(self):
-        return "Args[ *%s & **%s ]" % (self.args, self.kwargs)
+        return f"Args[ *{self.args} & **{self.kwargs} ]"
 
     def appendArgs(
         self,

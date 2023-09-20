@@ -94,19 +94,17 @@ def typedet(string: str, strict=True) -> any:
             string,
         )
     ):
-        if "." in string:
-            try:
-                return float(string)
-            except:
-                try:
-                    return float("0" + string)
-                except:
-                    pass
-        else:
+        if "." not in string:
             return int(string)
+        try:
+            return float(string)
+        except:
+            try:
+                return float(f"0{string}")
+            except:
+                pass
     try:
-        res = json.loads(string, strict=strict)
-        return res
+        return json.loads(string, strict=strict)
     except:
         pass
     return string
@@ -255,7 +253,7 @@ class StringBuilder:
 
 class MarkDownBuilder(StringBuilder):
     def title(self, level: int, text: str) -> Self:
-        return self.concat("%s %s" % ("#" * level, text)).newline
+        return self.concat(f'{"#" * level} {text}').newline
 
     title1 = partialmethod(title, 1)
     title2 = partialmethod(title, 2)
@@ -281,13 +279,13 @@ class MarkDownBuilder(StringBuilder):
     codeblock = partialmethod(block, "```")
 
     def hyperlink(self, text: str = "", uri: str = ""):
-        return self.concat("[%s](%s)" % (text, uri))
+        return self.concat(f"[{text}]({uri})")
 
     def image(self, text: str = "", imageuri: str = ""):
         return self.concat("!").hyperlink(text, imageuri)
 
     def startwith(self, symbol: str, text: str) -> Self:
-        return self.concat("%s %s" % (symbol, text))
+        return self.concat(f"{symbol} {text}")
 
     quote = partialmethod(startwith, ">")
     unorderlist = partialmethod(startwith, "-")

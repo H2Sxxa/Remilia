@@ -1,10 +1,10 @@
 def buildheader(token):
     return {
-    'App-OS': 'ios',
-    'App-OS-Version': '12.2',
-    'App-Version': '7.6.2',
-    'User-Agent': 'PixivIOSApp/7.6.2 (iOS 12.2; iPhone9,1)',
-    'Authorization': 'Bearer %s' % token
+        'App-OS': 'ios',
+        'App-OS-Version': '12.2',
+        'App-Version': '7.6.2',
+        'User-Agent': 'PixivIOSApp/7.6.2 (iOS 12.2; iPhone9,1)',
+        'Authorization': f'Bearer {token}',
     }
 
 
@@ -12,11 +12,11 @@ async def getAuth(refresh_token:str=None):
     import pixivpy_async
     async with pixivpy_async.PixivClient(bypass=True) as clt:
         api=pixivpy_async.AppPixivAPI(client=clt)
-        if refresh_token:
-            auth=await api.login(refresh_token=refresh_token)
-        else:
-            auth=await api.login_web()
-        return auth
+        return (
+            await api.login(refresh_token=refresh_token)
+            if refresh_token
+            else await api.login_web()
+        )
 
 def getHeader(auth:dict):
     '''
@@ -57,7 +57,12 @@ class ByPassResolver(AbstractResolver):
     async def resolve(self, host: str, port, family=socket.AF_INET) -> List[Dict[str, Any]]:
 
         new_host = host
-        if self.force_hosts and host in ["app-api.pixiv.net", "public-api.secure.pixiv.net", "www.pixiv.net", "oauth.secure.pixiv.net"]:
+        if self.force_hosts and host in {
+            "app-api.pixiv.net",
+            "public-api.secure.pixiv.net",
+            "www.pixiv.net",
+            "oauth.secure.pixiv.net",
+        }:
             new_host = "www.pixivision.net"
 
         done, pending = await asyncio.wait([asyncio.create_task(
@@ -69,25 +74,25 @@ class ByPassResolver(AbstractResolver):
             future.cancel()
 
         if len(ips) == 0:
-            raise Exception("Failed to resolve {}".format(host))
+            raise Exception(f"Failed to resolve {host}")
 
-        result = []
-        for i in ips:
-            result.append({
+        return [
+            {
                 "hostname": "",
                 "host": i,
                 "port": port,
                 "family": family,
                 "proto": 0,
                 "flags": socket.AI_NUMERICHOST,
-            })
-        return result
+            }
+            for i in ips
+        ]
 
     async def read_result(self, tasks: List[asyncio.Task]) -> List[str]:
-        if len(tasks) == 0:
+        if not tasks:
             return []
         task = tasks.pop()
-        
+
         try:
             await task
             return task.result()
@@ -100,10 +105,6 @@ class ByPassResolver(AbstractResolver):
 
     async def parse_result(self, hostname, response) -> List[str]:
         data = json.loads(response)
-        if data['Status'] != 0:
-            pass
-            #raise Exception("Failed to resolve {}".format(hostname))
-
         # Pattern to match IPv4 addresses 
         pattern = re.compile(
             r"((\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.){3}(1\d\d|2[0-4]\d|25[0-5]|[1-9]\d|\d)")
@@ -130,10 +131,6 @@ class ByPassResolver(AbstractResolver):
                 async with session.get(endpoint, params=params, headers={"accept": "application/dns-json"}, timeout=ClientTimeout(total=timeout)) as resp:
                     if resp.status == 200:
                         return await self.parse_result(hostname, await resp.text())
-                    else:
-                        pass
-                        #raise Exception("Failed to resolve {} with {}: HTTP Status {}".format(
-                        #    hostname, endpoint, resp.status))
         except:
             pass
 
@@ -162,7 +159,7 @@ class PixivClient:
             ssl_ctx.check_hostname = False
             ssl_ctx.verify_mode = ssl.CERT_NONE
 
-            kwargs.update({'ssl': ssl_ctx, 'resolver': ByPassResolver()})
+            kwargs |= {'ssl': ssl_ctx, 'resolver': ByPassResolver()}
 
         if proxy:
             try:
@@ -172,9 +169,8 @@ class PixivClient:
             except ModuleNotFoundError as e:
                 if proxy.startswith('socks'):
                     raise e
-                else:
-                    self.conn = aiohttp.TCPConnector(**kwargs)
-                    _flag = True
+                self.conn = aiohttp.TCPConnector(**kwargs)
+                _flag = True
         else:
             self.conn = aiohttp.TCPConnector(**kwargs)
 

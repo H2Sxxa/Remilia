@@ -19,16 +19,11 @@ class DirectoryNotFoundError(OSError):
 def format_size(size: int, unit: SizeUnits = SizeUnits()):
     if size < 1024:
         return (round(size, 2), unit.BYTES)
-    else:
-        KBX = size / 1024
-        if KBX < 1024:
-            return (round(KBX, 2), unit.K)
-        else:
-            MBX = KBX / 1024
-            if MBX < 1024:
-                return (round(MBX, 2), unit.M)
-            else:
-                return (round(MBX / 1024), unit.G)
+    KBX = size / 1024
+    if KBX < 1024:
+        return (round(KBX, 2), unit.K)
+    MBX = KBX / 1024
+    return (round(MBX, 2), unit.M) if MBX < 1024 else (round(MBX / 1024), unit.G)
 
 
 class rPath(type(_Path()), _Path):
@@ -51,13 +46,8 @@ class rPath(type(_Path()), _Path):
 
     def convey(self) -> Union["rFile", "rDir"]:
         if not self.exists():
-            raise NotFoundError(
-                "%s is not existed,can't convey a unexisted rPath" % self
-            )
-        if self.is_dir():
-            return rDir(self)
-        else:
-            return rFile(self)
+            raise NotFoundError(f"{self} is not existed,can't convey a unexisted rPath")
+        return rDir(self) if self.is_dir() else rFile(self)
 
     @property
     def times(self) -> PathTimes:
@@ -147,12 +137,10 @@ class rDir(rPath):
         return self.exists() and self.is_dir()
 
     def size(self, pattern: str = "*"):
-        return sum([rFile(rp).size for rp in rPath(self).glob(pattern) if rp.is_file()])
+        return sum(rFile(rp).size for rp in rPath(self).glob(pattern) if rp.is_file())
 
     def rsize(self, pattern: str = "*"):
-        return sum(
-            [rFile(rp).size for rp in rPath(self).rglob(pattern) if rp.is_file()]
-        )
+        return sum(rFile(rp).size for rp in rPath(self).rglob(pattern) if rp.is_file())
 
     def fsize(self, pattern: str = "*", unit: SizeUnits = SizeUnits()) -> str:
         return format_size(self.size(pattern), unit)
@@ -169,7 +157,7 @@ class rDir(rPath):
         return self
 
     def newFile(self, name: str, contant: Union[str, bytes], *args, **kwargs):
-        return rFile("%s/%s" % (self.absolute().to_string(), name)).write(
+        return rFile(f"{self.absolute().to_string()}/{name}").write(
             contant, *args, **kwargs
         )
 

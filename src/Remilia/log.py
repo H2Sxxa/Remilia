@@ -124,7 +124,7 @@ class Logger:
                 model, Fore.LIGHTRED_EX, Style.RESET_ALL
             ),
         }
-        self.ruler_map.update(ruler_map)
+        self.ruler_map |= ruler_map
         self.logcat = logcat
         self.handle_out = print
         self.vlevel = 5
@@ -178,11 +178,9 @@ def get_logger(*args, **kwargs) -> Logger:
     """
     global instance
     try:
-        if instance != None:
-            return instance
-        else:
+        if instance is None:
             instance = Logger(*args, **kwargs)
-            return instance
+        return instance
     except:
         instance = Logger(*args, **kwargs)
         return instance

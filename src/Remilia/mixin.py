@@ -31,10 +31,7 @@ _freeze_corobject: Dict[str, object] = {}
 
 
 def mixin_getattr(__o: object, __name: str, __gc=False) -> Any:
-    if __gc:
-        return get_referents(__o.__dict__)[0][__name]
-    else:
-        return getattr(__o, __name)
+    return get_referents(__o.__dict__)[0][__name] if __gc else getattr(__o, __name)
 
 
 def mixin_delattr(__o: object, __name: str, __gc=False) -> None:
@@ -72,10 +69,7 @@ class Ancestor:
         at: At = At.END,
         ancestor_hook: Callable[[List[Type]], Iterable] = lambda _: _,
     ) -> None:
-        if not isinstance(target, Iterable):
-            self.target = [target]
-        else:
-            self.target = target
+        self.target = [target] if not isinstance(target, Iterable) else target
         if not isinstance(ancestor_exclude, Iterable):
             self.ancestor_exclude = [ancestor_exclude]
         else:
@@ -125,10 +119,7 @@ class Mixin:
         target: Union[List[Type], Type],
         gc: bool = False,
     ) -> None:
-        if not isinstance(target, Iterable):
-            self.target = [target]
-        else:
-            self.target = target
+        self.target = [target] if not isinstance(target, Iterable) else target
         self.debuginfo = []
         self.gc = gc
 
@@ -216,16 +207,15 @@ class MixinBase:
         return self.mixintools.hasattr(__o, __name, self.gc)
 
     def match_at(self) -> None:
-        if self.at == None:
+        if self.at is None:
             return self.mixin()
         if not hasattr(self, self.at.value):
-            raise MixinError("%s not support %s" % (self, self.at.name))
-        else:
-            atmixin: MethodType = getattr(self, self.at.value)
-            if hasattr(atmixin, "__isabstractmethod__"):
-                if getattr(atmixin, "__isabstractmethod__") == True:
-                    raise MixinError("%s not support %s" % (self, self.at.name))
-            atmixin()
+            raise MixinError(f"{self} not support {self.at.name}")
+        atmixin: MethodType = getattr(self, self.at.value)
+        if hasattr(atmixin, "__isabstractmethod__"):
+            if getattr(atmixin, "__isabstractmethod__") == True:
+                raise MixinError(f"{self} not support {self.at.name}")
+        atmixin()
 
     def init(self, mixinmethod: MethodType):
         try:
@@ -234,13 +224,11 @@ class MixinBase:
             _freeze_action.append({"init": self.init, "arg": (mixinmethod,)})
             return mixinmethod
         self.mixinmethod = mixinmethod
-        if self.method == None:
+        if self.method is None:
             self.method = mixinmethod.__name__
-        elif isinstance(self.method, str):
-            pass
-        else:
+        elif not isinstance(self.method, str):
             self.method = self.method.__name__
-        if self.gc == None:
+        if self.gc is None:
             self.gc = self.configs.gc
         self.match_at()
         return mixinmethod
@@ -250,14 +238,8 @@ class MixinBase:
             setattr(self, n, v)
         return self
 
-    def cast(
-        subself,
-        at: At,
-        method: Union[str, MethodType, None] = None,
-        gc: bool = None,
-        mixintools: MixinTools = MixinTools(),
-    ) -> Self:
-        return subself().new(at, method, gc, mixintools)
+    def cast(self, at: At, method: Union[str, MethodType, None] = None, gc: bool = None, mixintools: MixinTools = MixinTools()) -> Self:
+        return self().new(at, method, gc, mixintools)
 
     def new(
         self,
@@ -285,14 +267,14 @@ _COCS: Dict[str, EnumCOChar] = {}
 for cocn in dir(EnumCOChar):
     coc = getattr(EnumCOChar, cocn)
     if isinstance(coc, EnumCOChar):
-        _COCS.update({str(coc): coc})
+        _COCS[str(coc)] = coc
 
 
 class CodeOperator:
     def __init__(
         self, method: MethodType, completion: bool = True, debugmode: bool = False
     ) -> None:
-        self.fullname = "%s.%s" % (method.__module__, method.__qualname__)
+        self.fullname = f"{method.__module__}.{method.__qualname__}"
         self.codes = list(CodeOperator.getsourcelines(method)[0])
         self.name = method.__name__
         self.base_indent = self.get_indent(self.codes[0]) * " "
@@ -303,23 +285,18 @@ class CodeOperator:
 
     @staticmethod
     def getsourcelines(__obj: object) -> List[str]:
-        fullname = "%s.%s" % (__obj.__module__, __obj.__qualname__)
+        fullname = f"{__obj.__module__}.{__obj.__qualname__}"
         if _freeze_corobject.__contains__(fullname):
             return [_freeze_corobject[fullname], len(_freeze_corobject[fullname])]
         return getsourcelines(__obj)
 
     def poplines(self, *lines) -> Self:
-        add = 0
-        for line in lines:
+        for add, line in enumerate(lines):
             self.codes.pop(line - add)
-            add += 1
         return self
 
     def completion_code(self, code: str) -> str:
-        if self.completion:
-            return "%s%s\n" % (self.extra_indent, code)
-        else:
-            return code
+        return "%s%s\n" % (self.extra_indent, code) if self.completion else code
 
     def insert(self, line: int, code: str) -> Self:
         self.codes.insert(line, self.completion_code(code))
@@ -408,7 +385,7 @@ class CodeOperator:
     def coc_translate(self, code: str):
         code = code.replace("#!", "")
         for name, coc in _COCS.items():
-            symbol = "%s;" % name
+            symbol = f"{name};"
             if coc == EnumCOChar.DELETELINE:
                 code = "\n".join(
                     [fcode for fcode in code.split("\n") if symbol not in fcode]
@@ -521,20 +498,20 @@ class Glue(MixinBase):
 
 class Accessor(MixinBase):
     def mixin(self) -> None:
-        property_name = "_%s%s" % (self.configs.mixincls.__name__, self.method)
+        property_name = f"_{self.configs.mixincls.__name__}{self.method}"
         for t in self.configs.target:
             self.mixin_setattr(
                 t,
                 property_name,
                 lambda _: mixin_getattr(
-                    _, "_%s%s" % (_.__class__.__name__, self.method)
+                    _, f"_{_.__class__.__name__}{self.method}"
                 ),
             )
             self.mixin_setattr(
                 t,
                 self.method,
                 lambda _: mixin_getattr(
-                    _, "_%s%s" % (_.__class__.__name__, self.method)
+                    _, f"_{_.__class__.__name__}{self.method}"
                 ),
             )
             self.mixin_setattr(
@@ -585,9 +562,9 @@ class Inject(MixinBase):
                 *insert_args,
                 **insert_kwargs,
             )
-            cor.poplines(*[line for line in self.poplines])
+            cor.poplines(*list(self.poplines))
         else:
-            cor.poplines(*[line for line in self.poplines])
+            cor.poplines(*list(self.poplines))
             cor = insertuse(
                 *insert_args,
                 **insert_kwargs,
@@ -637,7 +614,7 @@ class Inject(MixinBase):
 
     def mixin_insert(self) -> None:
         codes = CodeOperator.getCodelinesFromCallable(self.mixinmethod)
-        if self.insertline == None:
+        if self.insertline is None:
             self.mixin_head()
         if isinstance(self.poplines, int):
             self.poplines = [self.poplines]
