@@ -31,8 +31,8 @@ class InstanceMeta(type):
     instance: Self
 
     def __new__(cls, name, bases, attr) -> Self:
-        attr["instance"] = classmethod(
-            property(lambda *_: cls.__new__(cls, name, bases, attr)())
+        attr["instance"] = fastproperty(
+            lambda *_: cls.__new__(cls, name, bases, attr)()
         )
         return super().__new__(cls, name, bases, attr)
 

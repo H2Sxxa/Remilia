@@ -17,16 +17,7 @@ import inspect
 if TYPE_CHECKING:
     class _CallLogMethod:
         def __call__(self, *args:str) -> None:
-            ...
-
-try:
-    if system() == "Windows":
-        initcolor(wrap=True)
-    else:
-        initcolor(wrap=False)
-except:
-    pass
-
+            return args
 
 class Log:
     def __init__(
