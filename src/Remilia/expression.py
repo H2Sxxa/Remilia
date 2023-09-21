@@ -354,7 +354,7 @@ class FunctionBuilder:
             # Receive Args & store in namespace
             defargs: Args = self.__func_directives[0]
             for n, v in zip(defargs.args, args):
-                self.__func_namespace.update({n: v})
+                self.__func_namespace[n] = v
             self.__func_namespace.update(defargs.kwargs)
             self.__func_namespace.update(kwargs)
             # Handle directives

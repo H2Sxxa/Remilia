@@ -158,7 +158,9 @@ class DataBaseCate(LinkTun):
 
     def getTables(self) -> List[DataBaseTable]:
         return [
-            DataBaseTable(rf.to_file()) for rf in self.__dir.glob("*") if rf.is_file()
+            DataBaseTable(rf.to_file(), self.__struct)
+            for rf in self.__dir.glob("*")
+            if rf.is_file()
         ]
 
     @property

@@ -1,7 +1,6 @@
 from functools import partial
 from pathlib import Path
 from colorama import Fore, Back, Style, Cursor
-from colorama import init as initcolor
 from typing import Callable, Dict, List, Optional, Union,TYPE_CHECKING
 from typing_extensions import Self
 from time import strftime, localtime
